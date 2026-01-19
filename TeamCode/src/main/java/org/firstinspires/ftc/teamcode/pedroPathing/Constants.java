@@ -36,20 +36,12 @@ public class Constants {
             .translationalPIDFCoefficients(new PIDFCoefficients(0.16,0,0.0085,0.013))
             .headingPIDFCoefficients(new PIDFCoefficients(1,0,0.004,0.05))
             .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(1,0,0.1,0))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.025,0,0.00001, 0.6,0.01))
-            .secondaryDrivePIDFCoefficients(new FilteredPIDFCoefficients(0.02,0,0.000005,0.6,0.01))
             .useSecondaryDrivePIDF(true)
             .useSecondaryHeadingPIDF(true)
-            .centripetalScaling(0.005)
             .useSecondaryTranslationalPIDF(true)
-            /*
-                .translationalPIDFCoefficients(new PIDFCoefficients(0.16, 0, 0, 0.013))
-            .headingPIDFCoefficients(new PIDFCoefficients(1, 0, 0, 0.02))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.034, 0, 0, 0.6, 0.1))
-             */
             ;
 
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
+    public static PathConstraints pathConstraints = new PathConstraints(0.95, 100, 1, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)

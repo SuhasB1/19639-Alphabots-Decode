@@ -1,108 +1,69 @@
 package org.firstinspires.ftc.teamcode.config;
-import static org.firstinspires.ftc.teamcode.config.RobotConstants.*;
 
+import com.qualcomm.hardware.lynx.LynxI2cDeviceSynch;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
-import com.pedropathing.util.Timer;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.hardware.rev.RevColorSensorV3;
+import com.qualcomm.robotcore.hardware.I2cDeviceSynchSimple;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class IntakeSubsystem {
-    public enum IntakeState {
-        INTAKE, IDLE, OUTTAKE
-    }
-    public enum GateState {
-        OPEN, CLOSE
-    }
-    public DcMotorEx intake;
 
-    public Servo gate;
-    public IntakeState intakeState;
-    public GateState gateState;
-    public Timer autoTimer = new Timer();
-    private Telemetry telemetry;
+    private DcMotorEx intake;
+    private Servo gate;
+    public Servo rgb;
+    private RevColorSensorV3 sensor;
+    private final Telemetry telemetry;
 
-    public IntakeSubsystem(HardwareMap hardwareMap, Telemetry telemetry, IntakeState intakeState, GateState gateState) {
-        intake = hardwareMap.get(DcMotorEx.class, "intake");
-        gate = hardwareMap.get(Servo.class, "gate");
-        intake.setDirection(DcMotorEx.Direction.REVERSE);
+    // tune these
+    public double gateUpPos = 0.0;
+    public double gateDownPos = 0.2;
+    private double intakePower = 0.0;
+
+    public IntakeSubsystem(HardwareMap hw, Telemetry telemetry) {
         this.telemetry = telemetry;
-        this.intakeState = intakeState;
-        this.gateState = gateState;
-    }
-
-    public void setIntakeState(IntakeState intakeState) {
-        if (intakeState == IntakeState.IDLE) {
-            intake.setPower(intakeIdle);; // Explicitly referencing constant
-            this.intakeState = IntakeState.IDLE;
-        } else if (intakeState == IntakeState.INTAKE) {
-            intake.setPower(intakeIntake); // Explicitly referencing constant
-            this.intakeState = IntakeState.INTAKE;
-        } else if (intakeState == IntakeState.OUTTAKE) {
-            intake.setPower(intakeOuttake);
-            this.intakeState = IntakeState.OUTTAKE;
-        }
-    }
-    public void switchIntakeState() {
-        if (intakeState == IntakeState.INTAKE) {
-            setIntakeState(IntakeState.IDLE);
-        } else if (intakeState == IntakeState.IDLE || intakeState == IntakeState.OUTTAKE) {
-            setIntakeState(IntakeState.INTAKE);
-        }
-    }
-    public void switchOuttakeState() {
-        if (intakeState == IntakeState.OUTTAKE) {
-            setIntakeState(IntakeState.IDLE);
-        } else if (intakeState == IntakeState.INTAKE || intakeState == IntakeState.IDLE) {
-            setIntakeState(IntakeState.OUTTAKE);
-        }
-    }
-    public void setGateState(GateState gateState) {
-        if (gateState == GateState.OPEN) {
-            gate.setPosition(gateOpen);// Explicitly referencing constant
-            this.gateState = GateState.OPEN;
-        } else if (gateState == GateState.CLOSE) {
-            gate.setPosition(gateClose);// Explicitly referencing constant
-            this.gateState = GateState.CLOSE;
-        }
-    }
-    public void switchGateState() {
-        if (gateState == GateState.OPEN) {
-            setGateState(GateState.CLOSE);
-        } else if (gateState == GateState.CLOSE) {
-            setGateState(GateState.OPEN);
-        }
-    }
-    public void intake() {
-        setIntakeState(IntakeState.INTAKE);
-    }
-    public void outtake(){
-        setIntakeState(IntakeState.OUTTAKE);
-    }
-    public void idle() {
-        setIntakeState(IntakeState.IDLE);
-    }
-    public void open(){
-        setGateState(GateState.OPEN);
-    }
-    public void close(){
-        setGateState(GateState.CLOSE);
+        intake = hw.get(DcMotorEx.class, "intake");
+        rgb = hw.get(Servo.class, "rgb");
+        gate = hw.get(Servo.class, "gate");
+        sensor = hw.get(RevColorSensorV3.class, "color");
+        ((LynxI2cDeviceSynch) sensor.getDeviceClient()).setBusSpeed(LynxI2cDeviceSynch.BusSpeed.FAST_400K);
     }
 
     public void init() {
-        setIntakeState(IntakeState.IDLE);
-        setGateState(GateState.OPEN);
+        gateUp();
+        setPower(0);
     }
 
-    public void start() {
-        autoTimer.resetTimer();
+    public double getDistance(){
+        return sensor.getDistance(DistanceUnit.MM);
     }
 
+    public void setPower(double p) {
+        intakePower = p;
+        intake.setPower(p);
+    }
+
+    public void gateUp()   {
+        gate.setPosition(gateUpPos);
+    }
+    public void gateDown() {
+        gate.setPosition(gateDownPos);
+        intake.setPower(0.6);
+    }
+
+    public double getGatePos(){ return gate.getPosition();}
+
+    public double getIntakePower() { return intakePower; }
+
+    public boolean isGateUp() {
+        return Math.abs(gate.getPosition() - gateUpPos) < 0.03;
+    }
     public void telemetry() {
-        telemetry.addData("Intake State: ", intakeState);
-        telemetry.addData("Gate State: ", gateState);
-
+        telemetry.addData("IntakePower", intakePower);
+        telemetry.addData("GatePos", gate.getPosition());
+        telemetry.addData("Distance", sensor.getDistance(DistanceUnit.MM));
     }
 }

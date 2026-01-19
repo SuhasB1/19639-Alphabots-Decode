@@ -6,31 +6,21 @@ import com.pedropathing.geometry.Pose;
 @Config
 public class RobotConstants {
 
-    // Shooter
+    public static Pose BLUE_CASTLE = new Pose(6, 138);
+    public static Pose RED_CASTLE = new Pose(138, 138);
 
-    // Intake
-    public static double intakeIntake = 1;
-    public static double intakeIdle = 0;
-    public static double intakeOuttake = -1;
-    public static double gateOpen = 0;
-    public static double gateClose = 0.25;
+    public static Pose currentPose = new Pose(6.1,8.1);
+    public static Alliance currentTeam = Alliance.BLUE;
 
-    // Outtake
-    public static double hoodMin = 0;
-    public static double hoodMax = 1;
+    public static double rgb = 1;
 
-    //Field
+    public static double goalX = 0;
 
-    public static Pose BLUE_CASTLE = new Pose(1, 143);
-    public static Pose RED_CASTLE = new Pose(143, 143);
+    public static double goalY = 0;
 
-    //Variable Storage
-
-    public static Pose currentPose = new Pose();
-    public static Team currentTeam = Team.RED;
-    public enum Team {
-        BLUE, RED
-    }
     public static boolean software_are_bums = true;
+
+    public static boolean actionBusy = false;
+
 
 }
