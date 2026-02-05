@@ -17,7 +17,6 @@ import org.firstinspires.ftc.teamcode.config.shootAnywhere.ShooterCloseLUT;
 import org.firstinspires.ftc.teamcode.config.shootAnywhere.ShooterParams;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-@TeleOp(name = "Shooter Base vs LUT Test", group = "TEST")
 public class ShooterBaseVsLUTTest extends OpMode {
 
     private DcMotorEx shooterLeft, shooterRight;
@@ -50,7 +49,7 @@ public class ShooterBaseVsLUTTest extends OpMode {
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(6.1,8.1));
+        follower.setStartingPose(new Pose(6.6,8.1));
 
         closeLUT = new ShooterCloseLUT();
 

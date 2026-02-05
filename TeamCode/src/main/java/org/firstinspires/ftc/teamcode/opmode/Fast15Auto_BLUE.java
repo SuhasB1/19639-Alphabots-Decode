@@ -11,17 +11,21 @@ import org.firstinspires.ftc.teamcode.config.Robot;
 import org.firstinspires.ftc.teamcode.config.RobotConstants;
 import org.firstinspires.ftc.teamcode.config.paths.Fast15;
 
-@Autonomous(name = "Fast15 Auto Blue", group = "Main")
+@Autonomous(name = "BLUE_Fast15 Auto", group = "Main")
 public class Fast15Auto_BLUE extends OpMode {
 
     private Robot robot;
     private Fast15 paths;
 
     private int pathState = 0;
-    private static final double T_DONE_SCORE  = 0.9;
+
+    private static final double T_DONE_SCORE  = 0.95;
     private static final double T_DONE_INTAKE = 0.95;
 
     Timer pathTimer = new Timer();
+
+    Timer autoTimer = new Timer();
+
 
     @Override
     public void init() {
@@ -35,7 +39,7 @@ public class Fast15Auto_BLUE extends OpMode {
         follower.setStartingPose(paths.start);
         follower.update();
 
-        follower.setMaxPower(1);
+        follower.setMaxPower(0.95);
 
         pathState = 0;
     }
@@ -44,6 +48,7 @@ public class Fast15Auto_BLUE extends OpMode {
     public void start() {
         pathState = 0;
         pathTimer.resetTimer();
+        autoTimer.resetTimer();
         robot.intakeFSM.startTransfer();
         follower.followPath(paths.scoreP());
     }
@@ -65,10 +70,11 @@ public class Fast15Auto_BLUE extends OpMode {
     @Override
     public void stop(){
         RobotConstants.currentPose = follower.getPose();
+        follower.setMaxPower(1);
     }
 
     private boolean driveDone(double thresh) {
-        return follower.getCurrentTValue() > thresh;
+        return follower.getCurrentTValue() > thresh && !follower.isBusy();
     }
 
     private boolean actionDone() {
@@ -109,12 +115,6 @@ public class Fast15Auto_BLUE extends OpMode {
             case 2:
                 if (driveDone(T_DONE_INTAKE)) {
                     follower.followPath(paths.score1(), true);
-                    pathState = 250;
-                }
-                break;
-            case 250:
-                if (driveDone(0.1567)) {
-                    robot.intakeFSM.startTransfer();
                     pathState = 3;
                 }
                 break;
@@ -148,7 +148,7 @@ public class Fast15Auto_BLUE extends OpMode {
                 }
                 break;
             case 6:
-                if (pathTimer.getElapsedTimeSeconds() > 0.85) {
+                if (pathTimer.getElapsedTimeSeconds() > 0.9) {
                     follower.followPath(paths.score2(), true);
                     pathState = 7;
                 }
@@ -191,13 +191,24 @@ public class Fast15Auto_BLUE extends OpMode {
                     stopIntake();
                     follower.followPath(paths.intakeCorner(), true);
                     startIntake();
-                    pathState = 12;
+                    pathState = 1150;
                 }
                 break;
+            case 1150:
+                if(driveDone(T_DONE_SCORE)){
+                    pathTimer.resetTimer();
+                    pathState = 12;
+                }
             case 12:
                 if(driveDone(T_DONE_SCORE)){
-                    follower.setMaxPower(0.9);
+                    follower.setMaxPower(0.75);
                     follower.followPath(paths.scoreCorner(), true);
+                    pathState = 1250;
+                }
+                break;
+            case 1250:
+                if (driveDone(0.4)) {
+                    stopIntake();
                     pathState = 13;
                 }
                 break;
@@ -210,7 +221,6 @@ public class Fast15Auto_BLUE extends OpMode {
             case 14:
                 if (actionDone()) {
                     stopIntake();
-                    follower.followPath(paths.park(), true);
                     pathState = 15;
                 }
                 break;

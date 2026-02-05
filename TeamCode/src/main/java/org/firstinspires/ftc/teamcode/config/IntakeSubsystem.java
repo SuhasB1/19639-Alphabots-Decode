@@ -19,7 +19,7 @@ public class IntakeSubsystem {
     private final Telemetry telemetry;
 
     // tune these
-    public double gateUpPos = 0.0;
+    public double gateUpPos = 0.01;
     public double gateDownPos = 0.2;
     private double intakePower = 0.0;
 
@@ -51,7 +51,6 @@ public class IntakeSubsystem {
     }
     public void gateDown() {
         gate.setPosition(gateDownPos);
-        intake.setPower(0.6);
     }
 
     public double getGatePos(){ return gate.getPosition();}
@@ -62,8 +61,6 @@ public class IntakeSubsystem {
         return Math.abs(gate.getPosition() - gateUpPos) < 0.03;
     }
     public void telemetry() {
-        telemetry.addData("IntakePower", intakePower);
-        telemetry.addData("GatePos", gate.getPosition());
         telemetry.addData("Distance", sensor.getDistance(DistanceUnit.MM));
     }
 }

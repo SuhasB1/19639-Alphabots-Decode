@@ -12,28 +12,26 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
-
 import com.pedropathing.control.PIDFCoefficients;
-
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+
 @Config
 public class DriveSubsystem {
 
     private final Telemetry telemetry;
 
-    public double speed = 0.55;
+    public double speed = 1;
 
     public static double turnSpeed = 0.5;
 
-    public static double headingKp = 1.25;
+    public static double headingKp = 1;
     public double headingKi = 0.0;
-    public static double headingKd = 0.007;
+    public static double headingKd = 0.004;
     public double headingKf = 0.05;
 
     private double power;
-
 
     public double maxTurnCmd = 1.0;
     public static double headingDeadbandDeg = 0.4;
@@ -46,7 +44,7 @@ public class DriveSubsystem {
     }
 
     public void init() {
-        drivePID = new PIDFController(new PIDFCoefficients(headingKp, headingKi, headingKd,headingKf));
+        drivePID = new PIDFController(new PIDFCoefficients(headingKp, headingKi, headingKd, headingKf));
     }
 
     public void start() {
@@ -66,29 +64,52 @@ public class DriveSubsystem {
                 -gp1.right_stick_x * speed,
                 true
         );
-
         follower.update();
     }
+
     public void headingLockPathMode(double goalX, double goalY) {
         double targetHeading = atan2(goalY - getY(), goalX - getX());
 
-        if(getY()<50) {
-            if(RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 72){
+        if (getY() < 50) {
+            if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 72) {
+                targetHeading = targetHeading - Math.toRadians(1.2);
+            } else if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 72) {
                 targetHeading = targetHeading - Math.toRadians(2);
-            }else if(RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 72){
-                targetHeading = targetHeading - Math.toRadians(1);
-            }else if(RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 72){
-                targetHeading = targetHeading - Math.toRadians(2);
+            } else if (RobotConstants.currentTeam.equals(Alliance.RED) && getX() > 72) {
+                targetHeading = targetHeading + Math.toRadians(1.2);
+            } else {
+                targetHeading = targetHeading + Math.toRadians(2);
             }
-            else{
-                targetHeading = targetHeading + Math.toRadians(1);
+        }
+
+        if (getY() > 132) {
+            if (RobotConstants.currentTeam.equals(Alliance.BLUE)) {
+                targetHeading = targetHeading + Math.toRadians(2);
+            } else if (RobotConstants.currentTeam.equals(Alliance.RED)) {
+                targetHeading = targetHeading - Math.toRadians(2);
             }
         }
 
         PathChain chain = follower.pathBuilder()
                 .addPath(new Path(new BezierLine(
                         follower::getPose,
-                        () -> new Pose(getX() + 0.01, getY() + 0.01) // tiny move cuz it needs movement to acc run
+                        () -> new Pose(getX() + 0.01, getY() + 0.01)
+                )))
+                .setLinearHeadingInterpolation(
+                        follower.getHeading(),
+                        targetHeading
+                )
+                .build();
+
+        follower.followPath(chain);
+        follower.update();
+    }
+
+    public void headingLockPathModeToHeading(double targetHeading) {
+        PathChain chain = follower.pathBuilder()
+                .addPath(new Path(new BezierLine(
+                        follower::getPose,
+                        () -> new Pose(getX() + 0.01, getY() + 0.01)
                 )))
                 .setLinearHeadingInterpolation(
                         follower.getHeading(),
@@ -116,14 +137,36 @@ public class DriveSubsystem {
         double target = atan2(goalY - getY(), goalX - getX());
 
         if (getY() < 50) {
-            if (RobotConstants.currentTeam.equals(Alliance.BLUE)) {
-                target -= Math.toRadians(2);
+            if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 72) { //maybe less than 60 is subtract 1, 60-72 is subtract 0.5 and 72-84 is +0.5,>84 is +1
+                target = target - Math.toRadians(1.2);
+            } else if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 72) {
+                target = target - Math.toRadians(2);
+            } else if (RobotConstants.currentTeam.equals(Alliance.RED) && getX() > 72) {
+                target = target + Math.toRadians(1.2);
             } else {
-                target += Math.toRadians(2);
+                target = target + Math.toRadians(2);
             }
         }
 
-        double err = angleWrap(target - getHeading());
+        if (getY() > 132) {
+            if (RobotConstants.currentTeam.equals(Alliance.BLUE)) {
+                target = target + Math.toRadians(2);
+            } else if (RobotConstants.currentTeam.equals(Alliance.RED)) {
+                target = target - Math.toRadians(2);
+            }
+        }
+
+        headingLockPIDToHeadingInternal(vx, vy, target);
+    }
+
+    public void headingLockPIDToHeading(Gamepad gp1, double targetHeading) {
+        double vx = -gp1.left_stick_y * speed;
+        double vy = -gp1.left_stick_x * speed;
+        headingLockPIDToHeadingInternal(vx, vy, targetHeading);
+    }
+
+    private void headingLockPIDToHeadingInternal(double vx, double vy, double targetHeading) {
+        double err = angleWrap(targetHeading - getHeading());
         double errDeg = Math.abs(Math.toDegrees(err));
 
         drivePID.setCoefficients(new PIDFCoefficients(headingKp, headingKi, headingKd, headingKf));
@@ -134,16 +177,15 @@ public class DriveSubsystem {
         } else {
             drivePID.updateError(err);
             power = drivePID.run();
-
             power = clamp(power, -turnSpeed, turnSpeed);
-
-            power += Math.signum(err) * 0.02;
+            power += Math.signum(err) * 0.03;
             power = clamp(power, -turnSpeed, turnSpeed);
         }
 
         follower.setTeleOpDrive(vx, vy, power, true);
         follower.update();
     }
+
     private static double angleWrap(double a) {
         while (a <= -Math.PI) a += 2.0 * Math.PI;
         while (a >  Math.PI)  a -= 2.0 * Math.PI;

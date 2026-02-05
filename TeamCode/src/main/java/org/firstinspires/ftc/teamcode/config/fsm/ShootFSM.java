@@ -19,10 +19,10 @@ public class ShootFSM {
     private final ShooterSubsystem shooter;
     private final IntakeSubsystem intake;
 
-    // tolerances / timing
-    private double atSpeedTol = 20;
-    private double minSpinupTime = 0.5;
-    private double doneHoldTime = 0.8;
+    private double transferPower = 0.6;
+
+    private double minSpinupTime = 0.1;
+    private double doneHoldTime = 0;
 
     private final ElapsedTime timer = new ElapsedTime();
     private State state = State.IDLE;
@@ -38,7 +38,6 @@ public class ShootFSM {
         state = State.SPINUP;
 
         RobotConstants.actionBusy = true;
-
         intake.gateUp();
     }
 
@@ -56,12 +55,10 @@ public class ShootFSM {
                 break;
 
             case SPINUP:
-                intake.setPower(0.6);
-
+                intake.setPower(transferPower);
                 shooter.updateVelocityControl(x, y);
 
                 if (timer.seconds() > minSpinupTime && shooter.atSpeed(20)) {
-                    shooter.setHood(1);
                     intake.gateDown();
                     timer.reset();
                     state = State.DONE;
@@ -70,11 +67,10 @@ public class ShootFSM {
 
             case DONE:
                 shooter.updateVelocityControl(x, y);
-                if(y<50){
-                    doneHoldTime = 1.2;
-                }else{
-                    doneHoldTime = 0.8;
-                }
+
+                if (y < 50) doneHoldTime = 1.3;
+                else doneHoldTime = 0.85;
+
                 if (timer.seconds() > doneHoldTime) {
                     stop();
                 }

@@ -6,6 +6,8 @@ import static java.lang.Math.atan2;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.pedropathing.control.PIDFCoefficients;
+import com.pedropathing.control.PIDFController;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
@@ -24,7 +26,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 
 @Config
-@TeleOp(name = "Flywheel Tuning", group = "Tuning")
+@TeleOp
 public class FlywheelTuning extends OpMode {
     public PathChain Path1;
     public PathChain Path2;
@@ -32,13 +34,15 @@ public class FlywheelTuning extends OpMode {
     private Servo hood, gate;
 
     public static double targetVelocity = 0;
-    public static double intakePower = 0.6;
+    public static double intakePower = 0.65;
     public static double hoodPosition = 1;
     public static double gatePosition = 0.2;
 
-    public static double kP = 0.0125;
+    public static double kP = 0.01;
+    public static double kD = 0.0001;
     public static double kV = 0.0003215;
-    public static double kS = 0.09;
+    public static double kS = 0.062;
+
 
     public static double xPos = 44;
     public static double yPos  = 134;
@@ -65,7 +69,7 @@ public class FlywheelTuning extends OpMode {
         BASE_MODEL,
         LUT
     }
-
+    private final PIDFController velPID = new PIDFController(new PIDFCoefficients(kP, 0.0, kD, 0.0));
     private Mode mode = Mode.OFF;
 
     @Override
@@ -81,11 +85,11 @@ public class FlywheelTuning extends OpMode {
         hood.setDirection(Servo.Direction.REVERSE);
         motor2.setDirection(DcMotorSimple.Direction.REVERSE);
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(6.1,8.1));
+        follower.setStartingPose(new Pose(6.6,8.1));
         closeLUT = new ShooterCloseLUT();
         Path2 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(6.100, 8.100),
+                                new Pose(6.600, 8.100),
                                 new Pose(72.000, 24.000),
                                 new Pose(xPos, yPos)
                         )
@@ -93,7 +97,7 @@ public class FlywheelTuning extends OpMode {
                 .build();
         Path1 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(6.100, 8.100),
+                                new Pose(6.600, 8.100),
                                 new Pose(10.00, 20.00),
                                 new Pose(xPos, yPos)
                         )
@@ -101,6 +105,9 @@ public class FlywheelTuning extends OpMode {
                 .build();
         telemetry.setMsTransmissionInterval(50);
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        velPID.updateError(0.0);
+
+
     }
     @Override
     public void start() {
@@ -165,10 +172,15 @@ public class FlywheelTuning extends OpMode {
     }
 
     public void manualShoot(){
-        double power =
-                kP * (targetVelocity - velocity)
-                        + kV * velocity
-                        + kS * Math.signum(velocity);
+        velPID.setCoefficients(new PIDFCoefficients(kP, 0.0, kD, 0.0));
+        double error = targetVelocity - velocity;
+        velPID.updateError(error);
+        double uFb = velPID.run();
+
+        double uFf = kV * targetVelocity + kS * Math.signum(targetVelocity);
+
+        double power = uFb + uFf;
+        power = Math.max(-1.0, Math.min(1.0, power));
 
         motor.setPower(-power);
         motor2.setPower(-power);

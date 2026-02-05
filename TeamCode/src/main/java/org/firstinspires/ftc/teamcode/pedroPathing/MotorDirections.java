@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Config
-@TeleOp(name = "Motor Directions", group = "Teleop Test")
+@TeleOp
 public class MotorDirections extends OpMode {
     public static double leftFrontMotorDirection = 0;
     public static double leftRearMotorDirection = 0;

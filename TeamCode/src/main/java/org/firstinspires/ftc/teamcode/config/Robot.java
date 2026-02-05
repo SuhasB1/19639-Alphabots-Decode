@@ -48,7 +48,7 @@ public class Robot {
 
     public void init() {
         drive.init();
-        shooter.init();
+        shooter.init() ;
         intake.init();
     }
 
@@ -62,15 +62,13 @@ public class Robot {
     }
 
     public void telemetry(){
-        telemetry.addData("IntakeFSM", intakeFSM.getState());
-        telemetry.addData("ShootFSM", shootFSM.getState());
         telemetry.addData("Robot X", drive.getX());
         telemetry.addData("Robot Y", drive.getY());
         telemetry.addData("Robot Heading", Math.toDegrees(drive.getHeading()));
-        telemetry.addData("heading from goal", Math.toDegrees(atan2( RobotConstants.BLUE_CASTLE.getY() - drive.getY(), RobotConstants.BLUE_CASTLE.getX() - drive.getX())));
-        telemetry.addData("Shooter Target Vel", shooter.getTargetVelocity());
+        telemetry.addData("heading from goal", Math.toDegrees(atan2( RobotConstants.goalY - drive.getY(), RobotConstants.goalX - drive.getX())));
         telemetry.addData("Shooter Measured Vel", shooter.getMeasuredVelocity());
         intake.telemetry();
+        shooter.telemetry();
         telemetry.update();
     }
 }

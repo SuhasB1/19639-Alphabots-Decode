@@ -8,7 +8,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.config.*;
 
 @Config
-@TeleOp(name = "set servo test")
 public class servoSetPosition extends OpMode {
     public Servo gate;
     public Servo hood;
