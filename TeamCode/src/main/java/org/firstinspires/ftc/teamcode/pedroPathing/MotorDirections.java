@@ -66,30 +66,30 @@ public class MotorDirections extends OpMode {
         rightFront.setDirection(direction(rightFrontMotorDirection));
         rightRear.setDirection(direction(rightRearMotorDirection));
 
-        if(gamepad1.a)
+        if(gamepad1.cross)
             leftFront.setPower(1);
         else
             leftFront.setPower(0);
 
-        if(gamepad1.y)
+        if(gamepad1.triangle)
             leftRear.setPower(1);
         else
             leftRear.setPower(0);
 
-        if(gamepad1.b)
+        if(gamepad1.circle)
             rightFront.setPower(1);
         else
             rightFront.setPower(0);
 
-        if(gamepad1.x)
+        if(gamepad1.square)
             rightRear.setPower(1);
         else
             rightRear.setPower(0);
 
-        telemetryM.addLine("Press A to spin the left front motor at 100% power");
-        telemetryM.addLine("Press Y to spin the left rear motor at 100% power");
-        telemetryM.addLine("Press B to spin the right front motor at 100% power");
-        telemetryM.addLine("Press X to spin the right rear motor at 100% power");
+        telemetryM.addLine("Press Cross to spin the left front motor at 100% power");
+        telemetryM.addLine("Press Triangle to spin the left rear motor at 100% power");
+        telemetryM.addLine("Press Circle to spin the right front motor at 100% power");
+        telemetryM.addLine("Press Square to spin the right rear motor at 100% power");
         telemetryM.addLine("Left Front Motor Direction: " + leftFrontMotorDirection);
         telemetryM.addLine("Left Rear Motor Direction: "+ leftRearMotorDirection);
         telemetryM.addLine("Right Front Motor Direction: "+ rightFrontMotorDirection);

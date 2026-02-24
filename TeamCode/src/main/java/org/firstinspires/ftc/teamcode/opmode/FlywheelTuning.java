@@ -31,17 +31,16 @@ public class FlywheelTuning extends OpMode {
     public PathChain Path1;
     public PathChain Path2;
     private DcMotorEx motor, motor2, intake;
-    private Servo hood, gate;
+    private Servo gate;
 
     public static double targetVelocity = 0;
-    public static double intakePower = 0.65;
-    public static double hoodPosition = 1;
+    public static double intakePower = 1;
     public static double gatePosition = 0.2;
 
     public static double kP = 0.01;
-    public static double kD = 0.0001;
-    public static double kV = 0.0003215;
-    public static double kS = 0.062;
+    public static double kD = 0;
+    public static double kV = 0.0003525;
+    public static double kS = 0.06;
 
 
     public static double xPos = 44;
@@ -77,19 +76,17 @@ public class FlywheelTuning extends OpMode {
         motor = hardwareMap.get(DcMotorEx.class, "shooterLeft");
         motor2 = hardwareMap.get(DcMotorEx.class, "shooterRight");
         intake = hardwareMap.get(DcMotorEx.class, "intake");
-        hood = hardwareMap.get(Servo.class, "hood");
         gate = hardwareMap.get(Servo.class, "gate");
         drive = new DriveSubsystem(hardwareMap, telemetry);
 
 
-        hood.setDirection(Servo.Direction.REVERSE);
         motor2.setDirection(DcMotorSimple.Direction.REVERSE);
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(6.6,8.1));
+        follower.setStartingPose(new Pose(5,6.5));
         closeLUT = new ShooterCloseLUT();
         Path2 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(6.600, 8.100),
+                                new Pose(5, 6.5),
                                 new Pose(72.000, 24.000),
                                 new Pose(xPos, yPos)
                         )
@@ -97,7 +94,7 @@ public class FlywheelTuning extends OpMode {
                 .build();
         Path1 = follower.pathBuilder().addPath(
                         new BezierCurve(
-                                new Pose(6.600, 8.100),
+                                new Pose(5.00, 6.5),
                                 new Pose(10.00, 20.00),
                                 new Pose(xPos, yPos)
                         )
@@ -162,7 +159,6 @@ public class FlywheelTuning extends OpMode {
         if(gamepad1.dpad_down){
             intake.setPower(0);
         }
-        hood.setPosition(hoodPosition);
         if(gamepad1.dpad_left) {
             gate.setPosition(gatePosition);
         }

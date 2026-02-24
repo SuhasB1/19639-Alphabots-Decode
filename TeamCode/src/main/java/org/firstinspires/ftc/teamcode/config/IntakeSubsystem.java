@@ -14,14 +14,23 @@ public class IntakeSubsystem {
 
     private DcMotorEx intake;
     private Servo gate;
+    public Servo leverLeft;
+    public Servo leverRight;
     public Servo rgb;
     private RevColorSensorV3 sensor;
     private final Telemetry telemetry;
 
     // tune these
-    public double gateUpPos = 0.01;
-    public double gateDownPos = 0.2;
+    public double gateUpPos = 0.015;
+    public double gateDownPos = 0.235;
     private double intakePower = 0.0;
+
+    public double leverUpRightPos = 0.12;
+    public double leverUpLeftPos = 0.01;
+
+    public double leverDownLeftPos = 0.32;
+    public double leverDownRightPos = 0.43;
+
 
     public IntakeSubsystem(HardwareMap hw, Telemetry telemetry) {
         this.telemetry = telemetry;
@@ -29,11 +38,16 @@ public class IntakeSubsystem {
         rgb = hw.get(Servo.class, "rgb");
         gate = hw.get(Servo.class, "gate");
         sensor = hw.get(RevColorSensorV3.class, "color");
+        leverLeft = hw.get(Servo.class, "leverLeft");
+        leverRight = hw.get(Servo.class, "leverRight");
+        leverRight.setDirection(Servo.Direction.REVERSE);
+        leverLeft.setDirection(Servo.Direction.REVERSE);
         ((LynxI2cDeviceSynch) sensor.getDeviceClient()).setBusSpeed(LynxI2cDeviceSynch.BusSpeed.FAST_400K);
     }
 
     public void init() {
         gateUp();
+        leverUp();
         setPower(0);
     }
 
@@ -53,6 +67,26 @@ public class IntakeSubsystem {
         gate.setPosition(gateDownPos);
     }
 
+    public void leverDown(){
+        if(RobotConstants.currentTeam == Alliance.RED){
+            leverLeft.setPosition(leverDownLeftPos);
+            leverRight.setPosition(leverUpRightPos);
+        }else{
+            leverRight.setPosition(leverDownRightPos);
+            leverLeft.setPosition(leverUpLeftPos);
+        }
+    }
+
+    public void leverUp(){
+        if(RobotConstants.currentTeam == Alliance.RED){
+            leverLeft.setPosition(leverUpLeftPos);
+            leverRight.setPosition(leverUpRightPos);
+        }else{
+            leverRight.setPosition(leverUpRightPos);
+            leverLeft.setPosition(leverUpLeftPos);
+        }
+    }
+
     public double getGatePos(){ return gate.getPosition();}
 
     public double getIntakePower() { return intakePower; }
@@ -60,6 +94,14 @@ public class IntakeSubsystem {
     public boolean isGateUp() {
         return Math.abs(gate.getPosition() - gateUpPos) < 0.03;
     }
+    public boolean isLeverUp() {
+        if(RobotConstants.currentTeam == Alliance.RED){
+            return Math.abs(leverLeft.getPosition() - leverUpLeftPos) < 0.03;
+        }else{
+            return Math.abs(leverRight.getPosition() - leverUpRightPos) < 0.03;
+        }
+    }
+
     public void telemetry() {
         telemetry.addData("Distance", sensor.getDistance(DistanceUnit.MM));
     }

@@ -26,9 +26,9 @@ public class ShooterSubsystem {
     private ShooterParams params;
 
     public static double kP = 0.01;
-    public static double kD = 0.0001;
-    public static double kV = 0.0003215;
-    public static double kS = 0.062;
+    public static double kD = 0;
+    public static double kV = 0.0003525;
+    public static double kS = 0.06;
 
     public static boolean ENABLE_IDLE_REV = true;
 
@@ -46,9 +46,9 @@ public class ShooterSubsystem {
     private static final double C_X2 = 72.0,     C_Y2 = 60.0;
     private static final double C_X3 = 157.0909, C_Y3 = 144.0;
 
-    private static final double F_X1 = 30.0,  F_Y1 = -5.0;
-    private static final double F_X2 = 72.0,  F_Y2 = 36.0;
-    private static final double F_X3 = 114.0, F_Y3 = -5.0;
+    private static final double F_X1 = 20.0,  F_Y1 = -5.0;
+    private static final double F_X2 = 80.0,  F_Y2 = 36.0;
+    private static final double F_X3 = 120.0, F_Y3 = -5.0;
 
     private static class TriCheck {
         final boolean inside;

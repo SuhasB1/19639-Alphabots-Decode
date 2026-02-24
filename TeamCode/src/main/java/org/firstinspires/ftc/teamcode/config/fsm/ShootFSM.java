@@ -19,9 +19,9 @@ public class ShootFSM {
     private final ShooterSubsystem shooter;
     private final IntakeSubsystem intake;
 
-    private double transferPower = 0.6;
+    private double transferPower = 0.8;
 
-    private double minSpinupTime = 0.1;
+    private double minSpinupTime = 0;
     private double doneHoldTime = 0;
 
     private final ElapsedTime timer = new ElapsedTime();
@@ -45,7 +45,7 @@ public class ShootFSM {
         state = State.IDLE;
 
         shooter.stop();
-        intake.setPower(0.0);
+        intake.gateUp();
         RobotConstants.actionBusy = false;
     }
 
@@ -69,7 +69,7 @@ public class ShootFSM {
                 shooter.updateVelocityControl(x, y);
 
                 if (y < 50) doneHoldTime = 1.3;
-                else doneHoldTime = 0.85;
+                else doneHoldTime = 0.6;
 
                 if (timer.seconds() > doneHoldTime) {
                     stop();

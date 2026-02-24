@@ -49,7 +49,7 @@ public class ShooterBaseVsLUTTest extends OpMode {
         shooterRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(6.6,8.1));
+        follower.setStartingPose(new Pose(5,6.5));
 
         closeLUT = new ShooterCloseLUT();
 

@@ -13,33 +13,41 @@ import org.firstinspires.ftc.teamcode.config.Robot;
 import org.firstinspires.ftc.teamcode.config.RobotConstants;
 
 public class FarCycles {
+    double wiggle = 12.0;
+
 
     private final Follower f;
 
-    public Pose start = new Pose(53.850-1.25, 8.100, Math.toRadians(90));
-    public Pose shoot = new Pose(58.000-1.25, 12.000, Math.toRadians(111.3));
+    public Pose start = new Pose(53.850-2.2, 6.6, Math.toRadians(90));
 
-    public Pose intakeHP1 = new Pose(16-1.25, 14.0-4, Math.toRadians(200));
-    public Pose intakeHP2 = new Pose(16-1.25, 14.00-4, Math.toRadians(200));
-    public Pose intakeHP3 = new Pose(16 - 1.25, 14.00-4, Math.toRadians(200));
+    public Pose shootStart = new Pose(58.000-2.2, 12.000 - 1.5, Math.toRadians(112));
+    public Pose shoot = new Pose(58.000-2.2, 12.000 - 1.5, Math.toRadians(112));
 
-    public Pose shootControlFromStart = new Pose(55.000-1.25, 13.500);
-    public Pose intakeControlFromShoot = new Pose(34.300-1.25, 9.200);
+    public Pose intake3rdRow = new Pose(11.5-2.2, 37-1.5, Math.toRadians(180));
+    public Pose intake3rdRowControl = new Pose(65.2-2.2, 45-1.5);
 
-    public Pose park = new Pose(40-1.25, 30, Math.toRadians(111.3));
+    public Pose intakeHP1 = new Pose(16.5-5, 14.0 - 4.5, Math.toRadians(200));
+    public Pose intakeHP2 = new Pose(16.5-5, 14.00 - 1.5- (wiggle/2), Math.toRadians(180));
+    public Pose intakeHP3 = new Pose(16.5-5, 14.00 - 1.5- (wiggle/2), Math.toRadians(180));
+    public Pose intakeHP4 = new Pose(16.5-5, 14.00-4.5, Math.toRadians(180));
 
-    public double wiggleInches = 1.0;
+    public Pose shootControlFromStart = new Pose(55.000-2.2, 13.500-1.5);
+    public Pose intakeControlFromShoot = new Pose(34.300-2.2, 9.200-1.5);
+
+    public Pose park = new Pose(34.5, 10, Math.toRadians(90));
 
     public FarCycles(Robot r, Alliance a) {
         this.f = follower;
 
         if (a != null && a.equals(Alliance.RED)) {
             start = start.mirror();
+            shootStart.mirror();
             shoot = shoot.mirror();
 
             intakeHP1 = intakeHP1.mirror();
             intakeHP2 = intakeHP2.mirror();
             intakeHP3 = intakeHP3.mirror();
+            intakeHP4 = intakeHP4.mirror();
 
             shootControlFromStart = shootControlFromStart.mirror();
             intakeControlFromShoot = intakeControlFromShoot.mirror();
@@ -54,46 +62,74 @@ public class FarCycles {
 
     public PathChain startToShoot() {
         return f.pathBuilder()
-                .addPath(new BezierCurve(start, shootControlFromStart, shoot))
-                .setLinearHeadingInterpolation(start.getHeading(), shoot.getHeading())
+                .addPath(new BezierCurve(start, shootControlFromStart, shootStart))
+                .setLinearHeadingInterpolation(start.getHeading(), shootStart.getHeading())
+                .build();
+    }
+    public PathChain shootToIntake3rd() {
+        return f.pathBuilder()
+                .addPath(new BezierCurve(shoot, intake3rdRowControl, intake3rdRow))
+                .setLinearHeadingInterpolation(shootStart.getHeading(), intake3rdRow.getHeading(), 0.2)
                 .build();
     }
 
-    private PathChain shootToIntake(Pose intakePose) {
+    public PathChain intake3rdToShoot() {
+        return f.pathBuilder()
+                .addPath(new BezierCurve(intake3rdRow, intake3rdRowControl, shoot))
+                .setLinearHeadingInterpolation(intake3rdRow.getHeading(), shoot.getHeading(),0.4)
+                .build();
+    }
+
+    private PathChain shootToIntakeHP(Pose intakePose) {
         return f.pathBuilder()
                 .addPath(new BezierCurve(shoot, intakeControlFromShoot, intakePose))
                 .setConstantHeadingInterpolation(intakePose.getHeading())
                 .build();
     }
 
-    public PathChain shootToIntakeHP1() { return shootToIntake(intakeHP1); }
-    public PathChain shootToIntakeHP2() { return shootToIntake(intakeHP2); }
-    public PathChain shootToIntakeHP3() { return shootToIntake(intakeHP3); }
+    public PathChain shootToIntakeHP1() { return shootToIntakeHP(intakeHP1); }
+    public PathChain shootToIntakeHP2() { return shootToIntakeHP(intakeHP2); }
+    public PathChain shootToIntakeHP3() { return shootToIntakeHP(intakeHP3); }
+    public PathChain shootToIntakeHP4() { return shootToIntakeHP(intakeHP4); }
 
     public PathChain intakeWiggle(Pose intakePose) {
-        Pose left  = new Pose(intakePose.getX() - wiggleInches, intakePose.getY(), intakePose.getHeading());
-        Pose right = new Pose(intakePose.getX() + wiggleInches, intakePose.getY(), intakePose.getHeading());
+
+        Pose left = new Pose(
+                intakePose.getX(),
+                intakePose.getY(),
+                intakePose.getHeading()
+        );
+
+        Pose right = new Pose(
+                intakePose.getX()-3.5,
+                intakePose.getY() + wiggle,
+                intakePose.getHeading()
+        );
+
+        Pose control = new Pose(
+                intakePose.getX() - 1,
+                intakePose.getY()
+        );
 
         return f.pathBuilder()
-                .addPath(new BezierLine(intakePose, left))
+                .addPath(new BezierCurve(left, control, right))
                 .setConstantHeadingInterpolation(intakePose.getHeading())
-                .addPath(new BezierLine(left, right))
-                .setConstantHeadingInterpolation(intakePose.getHeading())
-                .addPath(new BezierLine(right, intakePose))
+                .addPath(new BezierCurve(right, control, left))
                 .setConstantHeadingInterpolation(intakePose.getHeading())
                 .build();
     }
-
-    private PathChain intakeToShoot(Pose intakePose) {
+    private PathChain intakeToShoot(Pose intakePose, double shootHeading) {
         return f.pathBuilder()
                 .addPath(new BezierLine(intakePose, shoot))
-                .setLinearHeadingInterpolation(intakePose.getHeading(), shoot.getHeading())
+                .setLinearHeadingInterpolation(intakePose.getHeading(), shootHeading)
                 .build();
     }
 
-    public PathChain intakeHP1ToShoot() { return intakeToShoot(intakeHP1); }
-    public PathChain intakeHP2ToShoot() { return intakeToShoot(intakeHP2); }
-    public PathChain intakeHP3ToShoot() { return intakeToShoot(intakeHP3); }
+    public PathChain intakeHP1ToShoot() { return intakeToShoot(intakeHP1, shoot.getHeading()); }
+    public PathChain intakeHP2ToShoot() { return intakeToShoot(intakeHP2, shoot.getHeading()); }
+    public PathChain intakeHP3ToShoot() { return intakeToShoot(intakeHP3, shoot.getHeading()); }
+    public PathChain intakeHP4ToShoot() { return intakeToShoot(intakeHP4, shoot.getHeading()); }
+
 
     public PathChain parkFromShoot() {
         return f.pathBuilder()

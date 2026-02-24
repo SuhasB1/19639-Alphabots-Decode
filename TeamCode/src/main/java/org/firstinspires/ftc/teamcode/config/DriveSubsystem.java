@@ -24,19 +24,23 @@ public class DriveSubsystem {
 
     public double speed = 1;
 
-    public static double turnSpeed = 0.5;
+    public static double turnSpeed = 1;
 
-    public static double headingKp = 1;
+    public static double headingKp = 0.5;
     public double headingKi = 0.0;
-    public static double headingKd = 0.004;
+    public static double headingKd = 0.04;
     public double headingKf = 0.05;
 
     private double power;
 
-    public double maxTurnCmd = 1.0;
     public static double headingDeadbandDeg = 0.4;
     private final ElapsedTime headingTimer = new ElapsedTime();
     PIDFController drivePID;
+
+    private Pose holdPose = null;
+    private boolean holdEnabled = false;
+    private final ElapsedTime holdBuildTimer = new ElapsedTime();
+    private static final double HOLD_REBUILD_PERIOD_S = 0.05;
 
     public DriveSubsystem(HardwareMap hw, Telemetry telemetry) {
         this.telemetry = telemetry;
@@ -67,58 +71,73 @@ public class DriveSubsystem {
         follower.update();
     }
 
-    public void headingLockPathMode(double goalX, double goalY) {
-        double targetHeading = atan2(goalY - getY(), goalX - getX());
+    public void startHoldPosition(Pose poseToHold) {
+        holdPose = poseToHold;
+        holdEnabled = true;
+        holdBuildTimer.reset();
+    }
 
-        if (getY() < 50) {
-            if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 72) {
-                targetHeading = targetHeading - Math.toRadians(1.2);
-            } else if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 72) {
-                targetHeading = targetHeading - Math.toRadians(2);
-            } else if (RobotConstants.currentTeam.equals(Alliance.RED) && getX() > 72) {
-                targetHeading = targetHeading + Math.toRadians(1.2);
-            } else {
-                targetHeading = targetHeading + Math.toRadians(2);
-            }
-        }
+    public void stopHoldPosition() {
+        holdEnabled = false;
+        holdPose = null;
+    }
 
-        if (getY() > 132) {
-            if (RobotConstants.currentTeam.equals(Alliance.BLUE)) {
-                targetHeading = targetHeading + Math.toRadians(2);
-            } else if (RobotConstants.currentTeam.equals(Alliance.RED)) {
-                targetHeading = targetHeading - Math.toRadians(2);
-            }
+    public boolean isHoldEnabled() {
+        return holdEnabled && holdPose != null;
+    }
+
+    public void holdTranslationToPose(double headingRad) {
+        if (!isHoldEnabled()) return;
+
+        if (holdBuildTimer.seconds() < HOLD_REBUILD_PERIOD_S) {
+            follower.update();
+            return;
         }
+        holdBuildTimer.reset();
 
         PathChain chain = follower.pathBuilder()
                 .addPath(new Path(new BezierLine(
                         follower::getPose,
-                        () -> new Pose(getX() + 0.01, getY() + 0.01)
+                        () -> new Pose(holdPose.getX(), holdPose.getY(), headingRad)
                 )))
-                .setLinearHeadingInterpolation(
-                        follower.getHeading(),
-                        targetHeading
-                )
+                .setConstantHeadingInterpolation(headingRad)
                 .build();
 
         follower.followPath(chain);
         follower.update();
     }
 
-    public void headingLockPathModeToHeading(double targetHeading) {
-        PathChain chain = follower.pathBuilder()
-                .addPath(new Path(new BezierLine(
-                        follower::getPose,
-                        () -> new Pose(getX() + 0.01, getY() + 0.01)
-                )))
-                .setLinearHeadingInterpolation(
-                        follower.getHeading(),
-                        targetHeading
-                )
-                .build();
-
-        follower.followPath(chain);
-        follower.update();
+    public double convertHeading(double target){
+        if (getY() < 50) {
+            if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 72) {
+                target = target + Math.toRadians(1.6);
+            } else if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 72) {
+                target = target + Math.toRadians(4);
+            } else if (RobotConstants.currentTeam.equals(Alliance.RED) && getX() > 72) {
+                target = target - Math.toRadians(1.6);
+            } else {
+                target = target - Math.toRadians(4);
+            }
+        }
+        else if (getY() > 125) {
+            if (RobotConstants.currentTeam.equals(Alliance.BLUE)) {
+                target = target + Math.toRadians(4);
+            } else if (RobotConstants.currentTeam.equals(Alliance.RED)) {
+                target = target - Math.toRadians(4);
+            }
+        }
+        else{
+            if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 72) {
+                target = target - Math.toRadians(1);
+            } else if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 72) {
+                target = target + Math.toRadians(2);
+            } else if (RobotConstants.currentTeam.equals(Alliance.RED) && getX() > 72) {
+                target = target - Math.toRadians(1);
+            } else {
+                target = target + Math.toRadians(2);
+            }
+        }
+        return target;
     }
 
     public void returnToTeleop() {
@@ -135,26 +154,7 @@ public class DriveSubsystem {
         double vy = -gp1.left_stick_x * speed;
 
         double target = atan2(goalY - getY(), goalX - getX());
-
-        if (getY() < 50) {
-            if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 72) { //maybe less than 60 is subtract 1, 60-72 is subtract 0.5 and 72-84 is +0.5,>84 is +1
-                target = target - Math.toRadians(1.2);
-            } else if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 72) {
-                target = target - Math.toRadians(2);
-            } else if (RobotConstants.currentTeam.equals(Alliance.RED) && getX() > 72) {
-                target = target + Math.toRadians(1.2);
-            } else {
-                target = target + Math.toRadians(2);
-            }
-        }
-
-        if (getY() > 132) {
-            if (RobotConstants.currentTeam.equals(Alliance.BLUE)) {
-                target = target + Math.toRadians(2);
-            } else if (RobotConstants.currentTeam.equals(Alliance.RED)) {
-                target = target - Math.toRadians(2);
-            }
-        }
+        target = convertHeading(target);
 
         headingLockPIDToHeadingInternal(vx, vy, target);
     }

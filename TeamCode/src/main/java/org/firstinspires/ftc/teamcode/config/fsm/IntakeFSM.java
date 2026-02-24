@@ -26,7 +26,7 @@ public class IntakeFSM {
     private static final double AUTO_TRANSFER_FRAC = 0.60;
 
     private static final double INTAKE_POWER = 1.0;
-    private static final double TRANSFER_POWER = 0.6;
+    private static final double TRANSFER_POWER = 0.8;
     private static final double OUTTAKE_POWER = -1.0;
 
     private final boolean[] possessionWindow = new boolean[POSSESSION_WINDOW_SAMPLES];
@@ -44,7 +44,6 @@ public class IntakeFSM {
 
     public void startIntake() {
         state = State.INTAKING;
-        intake.gateUp();
         intake.setPower(INTAKE_POWER);
         resetAutoWindow();
     }
