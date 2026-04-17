@@ -14,20 +14,28 @@ public class IntakeFSM {
     private final IntakeSubsystem intake;
     public State state = State.IDLE;
 
+    public boolean vibrate = false;
+
     private static final double BALL_THRESH_MM = 135.0;
 
-    private static final int POSSESSION_WINDOW_SAMPLES = 35;
-    private static final double POSSESSION_ON_FRAC  = 0.60;
-    private static final double POSSESSION_OFF_FRAC = 0.35;
+    // ===== Slow “possession” filter (mainly for turning OFF / stability) =====
+    private static final int POSSESSION_WINDOW_SAMPLES = 20;
+    private static final double POSSESSION_ON_FRAC  = 0.70;
+    private static final double POSSESSION_OFF_FRAC = 0.3;
 
     private static final boolean IGNORE_INVALID_SAMPLES = true;
 
-    private static final int AUTO_WINDOW_SAMPLES = 10;
-    private static final double AUTO_TRANSFER_FRAC = 0.60;
+    private static final int AUTO_WINDOW_SAMPLES = 20;
+    private static final double AUTO_TRANSFER_FRAC = 0.70;
 
     private static final double INTAKE_POWER = 1.0;
     private static final double TRANSFER_POWER = 0.8;
     private static final double OUTTAKE_POWER = -1.0;
+
+    // ===== Fast “turn ON now” filter =====
+    // Tune this: 2–4 usually feels instant without flicker.
+    private static final int FAST_ON_CONSECUTIVE = 4;
+    private int fastOnCount = 0;
 
     private final boolean[] possessionWindow = new boolean[POSSESSION_WINDOW_SAMPLES];
     private int possIdx = 0, possFilled = 0, possTrue = 0;
@@ -39,6 +47,7 @@ public class IntakeFSM {
 
     public IntakeFSM(IntakeSubsystem intake) {
         this.intake = intake;
+        vibrate = false;
         intake.rgb.setPosition(0.5);
     }
 
@@ -53,7 +62,8 @@ public class IntakeFSM {
         intake.setPower(TRANSFER_POWER);
         resetAutoWindow();
 
-        // FAST RGB: if we’re transferring because we detected possession, turn RGB on immediately
+        // If you want transfer to imply "we have it", you can keep this,
+        // but it can mask the sensor-based logic. Leaving as-is from your code:
         setRgb(true);
     }
 
@@ -73,7 +83,7 @@ public class IntakeFSM {
     }
 
     public void update() {
-        updateHasThreeBallsAndRgbSlow();
+        updateHasThreeBallsAndRgbFast();
 
         if (state == State.INTAKING) {
             Boolean sample = readBottomBallSample();
@@ -92,12 +102,28 @@ public class IntakeFSM {
         return state;
     }
 
-    private void updateHasThreeBallsAndRgbSlow() {
+    /**
+     * Fast ON (few consecutive positives),
+     * slow OFF (window/hysteresis).
+     */
+    private void updateHasThreeBallsAndRgbFast() {
         Boolean sample = readBottomBallSample();
         if (sample == null) return;
 
+        // Always update the slow window (for stable OFF)
         pushPossessionSample(sample);
 
+        // Fast ON: consecutive “present” samples
+        if (sample) fastOnCount++;
+        else fastOnCount = 0;
+
+        // If we’re currently OFF, allow instant-ish ON
+        if (!hasThreeBalls && fastOnCount >= FAST_ON_CONSECUTIVE) {
+            setRgb(true);
+            return;
+        }
+
+        // Slow OFF / hysteresis handling once window is filled
         if (possFilled < POSSESSION_WINDOW_SAMPLES) return;
 
         double frac = possTrue / (double) POSSESSION_WINDOW_SAMPLES;
@@ -110,17 +136,22 @@ public class IntakeFSM {
     }
 
     private void setRgb(boolean on) {
-        if (on != hasThreeBalls) {
-            hasThreeBalls = on;
-            intake.rgb.setPosition(hasThreeBalls ? 0.3 : 0.5);
-        }
+        if (on == hasThreeBalls) return;
+
+        hasThreeBalls = on;
+
+        // IMPORTANT: set BOTH states, not just ON
+        intake.rgb.setPosition(hasThreeBalls ? 0.3 : 0.5);
+
+        // Reset fast counter when switching states to avoid weird re-triggers
+        fastOnCount = 0;
     }
 
     private Boolean readBottomBallSample() {
         double distMm = intake.getDistance();
         boolean valid = Double.isFinite(distMm) && distMm > 0.0 && distMm < 5000.0;
         if (!valid && IGNORE_INVALID_SAMPLES) return null;
-        return valid && (distMm < BALL_THRESH_MM);
+        return distMm < BALL_THRESH_MM;
     }
 
     private void pushPossessionSample(boolean sample) {

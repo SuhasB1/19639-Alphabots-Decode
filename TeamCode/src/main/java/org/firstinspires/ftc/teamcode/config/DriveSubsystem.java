@@ -26,21 +26,22 @@ public class DriveSubsystem {
 
     public static double turnSpeed = 1;
 
-    public static double headingKp = 0.5;
+    public static double headingKp = 0.75;
     public double headingKi = 0.0;
-    public static double headingKd = 0.04;
+    public static double headingKd = 0.06;
     public double headingKf = 0.05;
 
     private double power;
 
-    public static double headingDeadbandDeg = 0.4;
+    public static double headingDeadbandDeg = 0.8;
     private final ElapsedTime headingTimer = new ElapsedTime();
     PIDFController drivePID;
 
     private Pose holdPose = null;
     private boolean holdEnabled = false;
-    private final ElapsedTime holdBuildTimer = new ElapsedTime();
-    private static final double HOLD_REBUILD_PERIOD_S = 0.05;
+
+    // If error <= this, we do NOT lock translation OR heading (your request)
+    public static double holdHeadingDeadbandDeg = 1.5;
 
     public DriveSubsystem(HardwareMap hw, Telemetry telemetry) {
         this.telemetry = telemetry;
@@ -74,7 +75,6 @@ public class DriveSubsystem {
     public void startHoldPosition(Pose poseToHold) {
         holdPose = poseToHold;
         holdEnabled = true;
-        holdBuildTimer.reset();
     }
 
     public void stopHoldPosition() {
@@ -86,47 +86,56 @@ public class DriveSubsystem {
         return holdEnabled && holdPose != null;
     }
 
-    public void holdTranslationToPose(double headingRad) {
+    public Pose getHoldPose() { return holdPose; }
+
+    /**
+     * Holds translation ONLY when heading error exceeds holdHeadingDeadbandDeg.
+     * If heading error is within the band, does nothing (no translation lock, no heading lock).
+     */
+    public void holdTranslationToPose(double desiredHeadingRad) {
         if (!isHoldEnabled()) return;
 
-        if (holdBuildTimer.seconds() < HOLD_REBUILD_PERIOD_S) {
-            follower.update();
-            return;
+        // Keep follower state fresh
+        follower.update();
+
+        double errRad = angleWrap(desiredHeadingRad - getHeading());
+        double errDeg = Math.abs(Math.toDegrees(errRad));
+
+        // Gate the entire hold behavior on heading error
+        if (errDeg <= holdHeadingDeadbandDeg) {
+            return; // <-- no lock at all inside band
         }
-        holdBuildTimer.reset();
 
         PathChain chain = follower.pathBuilder()
                 .addPath(new Path(new BezierLine(
                         follower::getPose,
-                        () -> new Pose(holdPose.getX(), holdPose.getY(), headingRad)
+                        () -> new Pose(holdPose.getX(), holdPose.getY(), desiredHeadingRad)
                 )))
-                .setConstantHeadingInterpolation(headingRad)
+                .setConstantHeadingInterpolation(desiredHeadingRad)
                 .build();
-
+        follower.setMaxPower(0.6);
         follower.followPath(chain);
         follower.update();
     }
 
-    public double convertHeading(double target){
+    public double convertHeading(double target) {
         if (getY() < 50) {
-            if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 72) {
+            if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 67) {
                 target = target + Math.toRadians(1.6);
-            } else if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 72) {
-                target = target + Math.toRadians(4);
-            } else if (RobotConstants.currentTeam.equals(Alliance.RED) && getX() > 72) {
+            } else if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 67) {
+                target = target - Math.toRadians(1);
+            } else if (RobotConstants.currentTeam.equals(Alliance.RED) && getX() > (141.5 - 67)) {
                 target = target - Math.toRadians(1.6);
             } else {
-                target = target - Math.toRadians(4);
+                target = target + Math.toRadians(1);
             }
-        }
-        else if (getY() > 125) {
+        } else if (getY() > 125) {
             if (RobotConstants.currentTeam.equals(Alliance.BLUE)) {
                 target = target + Math.toRadians(4);
             } else if (RobotConstants.currentTeam.equals(Alliance.RED)) {
                 target = target - Math.toRadians(4);
             }
-        }
-        else{
+        } else {
             if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 72) {
                 target = target - Math.toRadians(1);
             } else if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 72) {
@@ -142,6 +151,7 @@ public class DriveSubsystem {
 
     public void returnToTeleop() {
         follower.startTeleopDrive();
+        follower.setMaxPower(1);
         follower.update();
     }
 

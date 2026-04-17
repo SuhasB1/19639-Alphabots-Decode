@@ -30,18 +30,22 @@ public class GateCycle {
     public Pose intake2 = new Pose(14 - 2.5, 60.550 - 1.75, Math.toRadians(180));
     public Pose intake2Control = new Pose(69.5 - 2.5, 50 - 2.5);
 
-    public Pose gate = new Pose(16.5 - 1.4, 71.67, Math.toRadians(180));
-    public Pose gateControl = new Pose(20+3, 73 - 10);
+    public Pose gate = new Pose(16.5 - 1.25, 70.75, Math.toRadians(180));
+    public Pose gateControl = new Pose(20+5, 73 - 10);
     public Pose intake3 = new Pose(14 - 2.5, 37.750 - 2.5, Math.toRadians(180));
     public Pose intake3Control = new Pose(68.5 - 2.5, 20 - 2.5);
 
     public Pose score3Control = new Pose(67.67 - 2.5, 54 - 2.5);
     public Pose score3 = new Pose(48 - 2.5, 96.0 - 2.5, Math.toRadians(132.5));
-    public Pose gateIntake = new Pose(10.567, 58+0.5, Math.toRadians(158.67));
+    public Pose gateIntake = new Pose(10, 59.1, Math.toRadians(161));
+    public Pose gateIntakeThird = new Pose(10, 59.6, Math.toRadians(161));
     public Pose gateIntakeControlFromScore = new Pose(70, 50.0);
-    public Pose scoreControlFromGateIntake = new Pose(40.0, 80.0);
+    public Pose scoreControlFromGateIntake = new Pose(50, 70.0);
     public Pose parkScore = new Pose(55.5,103.5, Math.toRadians(145));
     public Pose parkScoreControlFromIntake3 = new Pose(67.67-2.5,54-2.5);
+
+    public Pose CONTROL_POSE_gateFromIntake1 = new Pose(30-2.5, 85-3);
+    public Pose CONTROL_POSE_scoreFromGate1 = new Pose(35-2.5, 90-3);
 
 
     public GateCycle(Robot r, Alliance a) {
@@ -69,6 +73,11 @@ public class GateCycle {
             score3 = score3.mirror();
 
             gateIntake = gateIntake.mirror();
+            gateIntake = new Pose(gateIntake.getX(), gateIntake.getY(), gateIntake.getHeading());
+            gateIntakeThird = gateIntakeThird.mirror();
+            gateIntakeThird = new Pose(gateIntake.getX(), gateIntake.getY(), gateIntake.getHeading());
+
+
             gateIntakeControlFromScore = gateIntakeControlFromScore.mirror();
             scoreControlFromGateIntake = scoreControlFromGateIntake.mirror();
 
@@ -137,6 +146,13 @@ public class GateCycle {
                 .setLinearHeadingInterpolation(score.getHeading(), gateIntake.getHeading(), 0.3)
                 .build();
     }
+    public PathChain scoreToGateIntakeThird() {
+        return f.pathBuilder()
+                .addPath(new BezierCurve(score, gateIntakeControlFromScore, gateIntakeThird))
+                .setBrakingStrength(1)
+                .setLinearHeadingInterpolation(score.getHeading(), gateIntakeThird.getHeading(), 0.3)
+                .build();
+    }
 
     public PathChain gateIntakeToScore() {
         return f.pathBuilder()
@@ -153,6 +169,13 @@ public class GateCycle {
                 .setLinearHeadingInterpolation(gateIntake.getHeading(), parkScore.getHeading(), 0.3)
                 .build();
     }
+    public PathChain gateIntakeThirdToScorePark() {
+        return f.pathBuilder()
+                .addPath(new BezierCurve(gateIntakeThird, scoreControlFromGateIntake, parkScore))
+                .setBrakingStrength(1)
+                .setLinearHeadingInterpolation(gateIntakeThird.getHeading(), parkScore.getHeading(), 0.3)
+                .build();
+    }
 
     public PathChain toIntake3() {
         return f.pathBuilder()
@@ -167,6 +190,22 @@ public class GateCycle {
                 .addPath(new BezierCurve(intake3, parkScoreControlFromIntake3, parkScore))
                 .setBrakingStrength(1)
                 .setLinearHeadingInterpolation(intake3.getHeading(), parkScore.getHeading(), 0.3)
+                .build();
+    }
+
+    public PathChain gateFromIntake1() {
+        return f.pathBuilder()
+                .addPath(new BezierCurve(intake1, CONTROL_POSE_gateFromIntake1, gate))
+                .setBrakingStrength(1)
+                .setLinearHeadingInterpolation(intake1.getHeading(), gate.getHeading())
+                .build();
+    }
+
+    public PathChain scoreFromGate1() {
+        return f.pathBuilder()
+                .addPath(new BezierCurve(gate, CONTROL_POSE_scoreFromGate1, score))
+                .setBrakingStrength(1)
+                .setLinearHeadingInterpolation(gate.getHeading(), score.getHeading())
                 .build();
     }
 }

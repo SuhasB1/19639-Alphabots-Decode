@@ -7,10 +7,27 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynchSimple;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class IntakeSubsystem {
+
+
+    public enum WiggleState {
+        IDLE,
+        LEFT_DOWN,
+        LEFT_PAUSE,
+        RIGHT_DOWN,
+        RIGHT_PAUSE
+    }
+
+    private WiggleState wiggleState = WiggleState.IDLE;
+    private final ElapsedTime wiggleTimer = new ElapsedTime();
+
+    public double wigglePauseTime = 0.1;
+    public double wiggleMoveTime = 0.25;
 
     private DcMotorEx intake;
     private Servo gate;
@@ -25,11 +42,11 @@ public class IntakeSubsystem {
     public double gateDownPos = 0.235;
     private double intakePower = 0.0;
 
-    public double leverUpRightPos = 0.12;
-    public double leverUpLeftPos = 0.01;
+    public double leverUpLeftPos = 0.03;
+    public double leverUpRightPos = 0.11;
+    public double leverDownLeftPos = 0.35;
 
-    public double leverDownLeftPos = 0.32;
-    public double leverDownRightPos = 0.43;
+    public double leverDownRightPos = 0.42;
 
 
     public IntakeSubsystem(HardwareMap hw, Telemetry telemetry) {
@@ -84,6 +101,52 @@ public class IntakeSubsystem {
         }else{
             leverRight.setPosition(leverUpRightPos);
             leverLeft.setPosition(leverUpLeftPos);
+        }
+    }
+
+    public void startWiggle() {
+        wiggleState = WiggleState.LEFT_DOWN;
+        wiggleTimer.reset();
+    }
+
+    public void stopWiggle() {
+        wiggleState = WiggleState.IDLE;
+    }
+
+    public void updateWiggle(boolean held) {
+        if (!held) {
+            wiggleState = WiggleState.IDLE;
+            return;
+        }
+
+        if (wiggleState == WiggleState.IDLE) {
+            wiggleState = WiggleState.LEFT_DOWN;
+            wiggleTimer.reset();
+        }
+
+        switch (wiggleState) {
+
+            case LEFT_DOWN:
+                if (wiggleTimer.seconds() > wiggleMoveTime) {
+                    leverLeft.setPosition(leverDownLeftPos);
+                    leverRight.setPosition(leverUpRightPos);
+                    wiggleTimer.reset();
+                    wiggleState = WiggleState.RIGHT_DOWN;
+                }
+                break;
+
+            case RIGHT_DOWN:
+                if (wiggleTimer.seconds() > wiggleMoveTime) {
+                    leverRight.setPosition(leverDownRightPos);
+                    leverLeft.setPosition(leverUpLeftPos);
+                    wiggleTimer.reset();
+                    wiggleState = WiggleState.LEFT_DOWN;
+                }
+                break;
+
+            case IDLE:
+            default:
+                break;
         }
     }
 

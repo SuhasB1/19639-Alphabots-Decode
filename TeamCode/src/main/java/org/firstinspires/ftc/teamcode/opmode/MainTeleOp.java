@@ -119,6 +119,9 @@ public class MainTeleOp extends OpMode {
     public void loop() {
         loopTime.reset();
 
+        boolean wiggleHeld = gamepad2.dpad_down;
+        robot.intake.updateWiggle(wiggleHeld);
+
         boolean dpadDown = gamepad2.cross;
         if (dpadDown && !prevDpadDown) {
             if (RobotConstants.currentTeam == Alliance.RED) {
@@ -178,8 +181,10 @@ public class MainTeleOp extends OpMode {
         prevRB2 = rb2;
 
         boolean ltHeld = gamepad1.left_trigger > 0.1;
-        if (ltHeld) robot.intake.leverDown();
-        else robot.intake.leverUp();
+        if (!wiggleHeld) {
+            if (ltHeld) robot.intake.leverDown();
+            else robot.intake.leverUp();
+        }
 
         boolean triangleHeld = gamepad1.triangle;
 
@@ -220,7 +225,6 @@ public class MainTeleOp extends OpMode {
                         .setLinearHeadingInterpolation(startH, endH)
                         .build();
 
-                follower.setMaxPower(0.8);
                 follower.followPath(lutPath, true);
                 lutDriving = true;
             }

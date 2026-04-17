@@ -46,9 +46,9 @@ public class ShooterSubsystem {
     private static final double C_X2 = 72.0,     C_Y2 = 60.0;
     private static final double C_X3 = 157.0909, C_Y3 = 144.0;
 
-    private static final double F_X1 = 20.0,  F_Y1 = -5.0;
-    private static final double F_X2 = 80.0,  F_Y2 = 36.0;
-    private static final double F_X3 = 120.0, F_Y3 = -5.0;
+    private static final double F_X1 = 10.0,  F_Y1 = -5.0;
+    private static final double F_X2 = 80.0,  F_Y2 = 45.0;
+    private static final double F_X3 = 130.0, F_Y3 = -5.0;
 
     private static class TriCheck {
         final boolean inside;

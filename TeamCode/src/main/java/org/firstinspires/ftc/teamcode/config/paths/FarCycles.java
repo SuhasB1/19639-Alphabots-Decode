@@ -26,10 +26,12 @@ public class FarCycles {
     public Pose intake3rdRow = new Pose(11.5-2.2, 37-1.5, Math.toRadians(180));
     public Pose intake3rdRowControl = new Pose(65.2-2.2, 45-1.5);
 
-    public Pose intakeHP1 = new Pose(16.5-5, 14.0 - 4.5, Math.toRadians(200));
-    public Pose intakeHP2 = new Pose(16.5-5, 14.00 - 1.5- (wiggle/2), Math.toRadians(180));
-    public Pose intakeHP3 = new Pose(16.5-5, 14.00 - 1.5- (wiggle/2), Math.toRadians(180));
-    public Pose intakeHP4 = new Pose(16.5-5, 14.00-4.5, Math.toRadians(180));
+    public Pose intakeHP1 = new Pose(16.5-5.25, 14.0 - 5.5, Math.toRadians(190));
+    public Pose intakeHP2 = new Pose(16.5-4.5, 14.00 - 1.5- (wiggle/2), Math.toRadians(180));
+    public Pose intakeHP3 = new Pose(16.5-4.5, 14.00 - 1.5 - (wiggle/2), Math.toRadians(180));
+    public Pose intakeHP4 = new Pose(16.5-4.5, 14.00-4.5, Math.toRadians(180));
+
+    public Pose intakeTHIRDHP2 = new Pose(16.5-4.5, 38 - (wiggle/2), Math.toRadians(175));
 
     public Pose shootControlFromStart = new Pose(55.000-2.2, 13.500-1.5);
     public Pose intakeControlFromShoot = new Pose(34.300-2.2, 9.200-1.5);
@@ -41,13 +43,18 @@ public class FarCycles {
 
         if (a != null && a.equals(Alliance.RED)) {
             start = start.mirror();
-            shootStart.mirror();
+            shootStart = shootStart.mirror();
             shoot = shoot.mirror();
+
+            intake3rdRow = intake3rdRow.mirror();
+            intake3rdRowControl = intake3rdRowControl.mirror();
 
             intakeHP1 = intakeHP1.mirror();
             intakeHP2 = intakeHP2.mirror();
             intakeHP3 = intakeHP3.mirror();
             intakeHP4 = intakeHP4.mirror();
+
+            intakeTHIRDHP2 = intakeTHIRDHP2.mirror();
 
             shootControlFromStart = shootControlFromStart.mirror();
             intakeControlFromShoot = intakeControlFromShoot.mirror();
@@ -89,6 +96,8 @@ public class FarCycles {
 
     public PathChain shootToIntakeHP1() { return shootToIntakeHP(intakeHP1); }
     public PathChain shootToIntakeHP2() { return shootToIntakeHP(intakeHP2); }
+    public PathChain shootToIntakeTHIRDHP2() { return shootToIntakeHP(intakeTHIRDHP2); }
+
     public PathChain shootToIntakeHP3() { return shootToIntakeHP(intakeHP3); }
     public PathChain shootToIntakeHP4() { return shootToIntakeHP(intakeHP4); }
 
@@ -101,13 +110,13 @@ public class FarCycles {
         );
 
         Pose right = new Pose(
-                intakePose.getX()-3.5,
+                intakePose.getX()-7,
                 intakePose.getY() + wiggle,
                 intakePose.getHeading()
         );
 
         Pose control = new Pose(
-                intakePose.getX() - 1,
+                intakePose.getX() + 6,
                 intakePose.getY()
         );
 
@@ -115,6 +124,27 @@ public class FarCycles {
                 .addPath(new BezierCurve(left, control, right))
                 .setConstantHeadingInterpolation(intakePose.getHeading())
                 .addPath(new BezierCurve(right, control, left))
+                .setConstantHeadingInterpolation(intakePose.getHeading())
+                .build();
+    }
+
+    public PathChain intakeShake(Pose intakePose) {
+
+        Pose left = new Pose(
+                intakePose.getX()-1,
+                intakePose.getY(),
+                intakePose.getHeading()
+        );
+
+        Pose right = new Pose(
+                intakePose.getX()+1,
+                intakePose.getY(),
+                intakePose.getHeading()
+        );
+        return f.pathBuilder()
+                .addPath(new BezierLine(left, right))
+                .setConstantHeadingInterpolation(intakePose.getHeading())
+                .addPath(new BezierLine(right, left))
                 .setConstantHeadingInterpolation(intakePose.getHeading())
                 .build();
     }
@@ -127,6 +157,7 @@ public class FarCycles {
 
     public PathChain intakeHP1ToShoot() { return intakeToShoot(intakeHP1, shoot.getHeading()); }
     public PathChain intakeHP2ToShoot() { return intakeToShoot(intakeHP2, shoot.getHeading()); }
+    public PathChain intakeTHIRDHP2ToShoot() { return intakeToShoot(intakeTHIRDHP2, shoot.getHeading()); }
     public PathChain intakeHP3ToShoot() { return intakeToShoot(intakeHP3, shoot.getHeading()); }
     public PathChain intakeHP4ToShoot() { return intakeToShoot(intakeHP4, shoot.getHeading()); }
 

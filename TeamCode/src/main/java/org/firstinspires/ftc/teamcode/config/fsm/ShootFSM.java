@@ -69,7 +69,7 @@ public class ShootFSM {
                 shooter.updateVelocityControl(x, y);
 
                 if (y < 50) doneHoldTime = 1.3;
-                else doneHoldTime = 0.6;
+                else doneHoldTime = 0.45;
 
                 if (timer.seconds() > doneHoldTime) {
                     stop();

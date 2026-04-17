@@ -11,7 +11,7 @@ import org.firstinspires.ftc.teamcode.config.Robot;
 import org.firstinspires.ftc.teamcode.config.RobotConstants;
 import org.firstinspires.ftc.teamcode.config.paths.GateCycle;
 
-@Autonomous(name = "RED_GateCyclex3", group = "Main")
+@Autonomous(name = "!RED_GateCyclex3", group = "Main")
 public class GateCyclex3Auto_RED extends OpMode {
 
     private Robot robot;
@@ -178,7 +178,11 @@ public class GateCyclex3Auto_RED extends OpMode {
             case 9:
                 if (actionDone()) {
                     stopIntake();
-                    follower.followPath(paths.scoreToGateIntake(), true);
+                    if(gateRepeatsDone == 2) {
+                        follower.followPath(paths.scoreToGateIntakeThird(), true);
+                    }else{
+                        follower.followPath(paths.scoreToGateIntake(), true);
+                    }
                     leverDown();
                     startIntake();
                     pathState = 10;
@@ -195,7 +199,7 @@ public class GateCyclex3Auto_RED extends OpMode {
             case 11:
                 if (gateWaitTimer.getElapsedTimeSeconds() >= GATE_WAIT_SECONDS) {
                     if(gateRepeatsDone == 2){
-                        follower.followPath(paths.gateIntakeToScorePark());
+                        follower.followPath(paths.gateIntakeThirdToScorePark());
                         pathState = 12;
                     }else {
                         follower.followPath(paths.gateIntakeToScore(), true);

@@ -19,24 +19,26 @@ public class FarCyclesx4ThirdAuto_BLUE extends OpMode {
 
     private static final double T_DONE = 0.9;
 
-    private static final double DRIVE_POWER_SHOOT  = 0.9;
-    private static final double DRIVE_POWER_INTAKE = 0.9;
+    private static final double DRIVE_POWER_SHOOT  = 1;
+    private static final double DRIVE_POWER_INTAKE = 1;
 
-    public static double WAIT_PRELOAD_SHOT = 0.4;
+    public static double WAIT_PRELOAD_SHOT = 0.5;
 
-    public static double WAIT_CYCLE1_SHOT = 0.4;
-    public static double WAIT_CYCLE2_SHOT = 0.4;
-    public static double WAIT_CYCLE3_SHOT = 0.4;
-    public static double WAIT_CYCLE4_SHOT = 0.4;
+    public static double WAIT_CYCLE1_SHOT = 0.65;
+    public static double WAIT_CYCLE2_SHOT = 0.65;
+    public static double WAIT_CYCLE3_SHOT = 0.65;
+    public static double WAIT_CYCLE4_SHOT = 0.65;
 
-    public static double WAIT_INTAKE1_SETTLE = 1;
-    public static double WAIT_INTAKE2_SETTLE = 0.2;
-    public static double WAIT_INTAKE3_SETTLE = 0.2;
+    public static double WAIT_INTAKE1_SETTLE = 0.3;
+    public static double WAIT_INTAKE2_SETTLE = 0.1;
+    public static double WAIT_INTAKE3_SETTLE = 0.1;
 
+    public static double WAIT_WIGGLE1 = 0;
+    public static double WAIT_WIGGLE2 = 1;
+    public static double WAIT_WIGGLE3 = 1;
 
-    public static double WAIT_WIGGLE1 = 1.2;
-    public static double WAIT_WIGGLE2 = 1.2;
-    public static double WAIT_WIGGLE3 = 1.2;
+    public static double WAIT_SHAKE = 0.6;
+
 
 
     private final Timer waitTimer = new Timer();
@@ -55,17 +57,13 @@ public class FarCyclesx4ThirdAuto_BLUE extends OpMode {
         RobotConstants.currentPose = paths.start;
 
         follower.setMaxPower(DRIVE_POWER_SHOOT);
-
         state = 0;
     }
 
     @Override
     public void start() {
         robot.intakeFSM.startTransfer();
-
-        follower.setMaxPower(DRIVE_POWER_SHOOT);
         follower.followPath(paths.startToShoot(), true);
-
         waitTimer.resetTimer();
         state = 0;
     }
@@ -89,11 +87,18 @@ public class FarCyclesx4ThirdAuto_BLUE extends OpMode {
 
     @Override
     public void loop() {
+
         follower.update();
-        robot.update(gamepad1, gamepad2, follower.getPose().getX(), follower.getPose().getY());
-        robot.shooter.updateVelocityControl(follower.getPose().getX(), follower.getPose().getY());
+        robot.update(gamepad1, gamepad2,
+                follower.getPose().getX(),
+                follower.getPose().getY());
+        robot.shooter.updateVelocityControl(
+                follower.getPose().getX(),
+                follower.getPose().getY());
 
         switch (state) {
+
+            // PRELOAD
             case 0:
                 if (driveDone()) {
                     waitTimer.resetTimer();
@@ -108,6 +113,7 @@ public class FarCyclesx4ThirdAuto_BLUE extends OpMode {
                 }
                 break;
 
+            // THIRD ROW (NO WIGGLE)
             case 2:
                 if (!RobotConstants.actionBusy) {
                     follower.setMaxPower(DRIVE_POWER_INTAKE);
@@ -119,7 +125,6 @@ public class FarCyclesx4ThirdAuto_BLUE extends OpMode {
 
             case 3:
                 if (driveDone()) {
-                    follower.setMaxPower(DRIVE_POWER_INTAKE);
                     robot.intakeFSM.startTransfer();
                     follower.followPath(paths.intake3rdToShoot(), true);
                     state = 4;
@@ -129,180 +134,199 @@ public class FarCyclesx4ThirdAuto_BLUE extends OpMode {
             case 4:
                 if (driveDone()) {
                     waitTimer.resetTimer();
-                    state = 45;
-                }
-                break;
-
-            case 45:
-                if (waitTimer.getElapsedTimeSeconds() > WAIT_CYCLE1_SHOT) {
-                    startShoot();
                     state = 5;
                 }
                 break;
 
             case 5:
-                if (!RobotConstants.actionBusy) {
-                    follower.setMaxPower(DRIVE_POWER_INTAKE);
-                    follower.followPath(paths.shootToIntakeHP1(), true);
-                    startIntake();
+                if (waitTimer.getElapsedTimeSeconds() > WAIT_CYCLE1_SHOT) {
+                    startShoot();
                     state = 6;
                 }
                 break;
 
+            // HP1
             case 6:
-                if (driveDone()) {
-                    //follower.followPath(paths.intakeWiggle(paths.intakeHP1), true);
-                    waitTimer.resetTimer();
+                if (!RobotConstants.actionBusy) {
+                    follower.followPath(paths.shootToIntakeHP1(), true);
+                    startIntake();
                     state = 7;
                 }
                 break;
 
             case 7:
-                if (driveDone() || waitTimer.getElapsedTimeSeconds() > WAIT_WIGGLE1) {
+                if (driveDone()) {
+                    follower.followPath(paths.intakeWiggle(paths.intakeHP1), true);
                     waitTimer.resetTimer();
                     state = 8;
                 }
                 break;
 
             case 8:
-                if (waitTimer.getElapsedTimeSeconds() > WAIT_INTAKE1_SETTLE) {
-                    stopIntake();
-                    robot.intakeFSM.startTransfer();
-
-                    follower.setMaxPower(DRIVE_POWER_SHOOT);
-                    follower.followPath(paths.intakeHP1ToShoot(), true);
-
+                if (driveDone() || waitTimer.getElapsedTimeSeconds() > WAIT_WIGGLE1) {
+                    follower.followPath(paths.intakeShake(paths.intakeHP1), true);
+                    waitTimer.resetTimer();
                     state = 9;
                 }
                 break;
 
             case 9:
-                if (driveDone()) {
+                if (driveDone() || waitTimer.getElapsedTimeSeconds() > WAIT_SHAKE) {
                     waitTimer.resetTimer();
                     state = 10;
                 }
                 break;
 
             case 10:
-                if (waitTimer.getElapsedTimeSeconds() > WAIT_CYCLE2_SHOT) {
-                    startShoot();
+                if (waitTimer.getElapsedTimeSeconds() > WAIT_INTAKE1_SETTLE) {
+                    stopIntake();
+                    robot.intakeFSM.startTransfer();
+                    follower.setMaxPower(DRIVE_POWER_SHOOT);
+                    follower.followPath(paths.intakeHP1ToShoot(), true);
                     state = 11;
                 }
                 break;
 
             case 11:
-                if (!RobotConstants.actionBusy) {
-                    follower.setMaxPower(DRIVE_POWER_INTAKE);
-                    follower.followPath(paths.shootToIntakeHP2(), true);
-                    startIntake();
+                if (driveDone()) {
+                    waitTimer.resetTimer();
                     state = 12;
                 }
                 break;
 
             case 12:
-                if (driveDone()) {
-                    follower.followPath(paths.intakeWiggle(paths.intakeHP2), true);
-                    waitTimer.resetTimer();
+                if (waitTimer.getElapsedTimeSeconds() > WAIT_CYCLE2_SHOT) {
+                    startShoot();
                     state = 13;
                 }
                 break;
 
+            // HP2
             case 13:
-                if (driveDone() || waitTimer.getElapsedTimeSeconds() > WAIT_WIGGLE2) {
-                    waitTimer.resetTimer();
+                if (!RobotConstants.actionBusy) {
+                    follower.setMaxPower(DRIVE_POWER_INTAKE);
+                    follower.followPath(paths.shootToIntakeTHIRDHP2(), true);
+                    startIntake();
                     state = 14;
                 }
                 break;
 
             case 14:
-                if (waitTimer.getElapsedTimeSeconds() > WAIT_INTAKE2_SETTLE) {
-                    stopIntake();
-                    robot.intakeFSM.startTransfer();
-
-                    follower.setMaxPower(DRIVE_POWER_SHOOT);
-                    follower.followPath(paths.intakeHP2ToShoot(), true);
-
+                if (driveDone()) {
+                    follower.followPath(paths.intakeWiggle(paths.intakeTHIRDHP2), true);
+                    waitTimer.resetTimer();
                     state = 15;
                 }
                 break;
 
             case 15:
-                if (driveDone()) {
+                if (driveDone() || waitTimer.getElapsedTimeSeconds() > WAIT_WIGGLE2) {
+                    follower.followPath(paths.intakeShake(paths.intakeTHIRDHP2), true);
                     waitTimer.resetTimer();
                     state = 16;
                 }
                 break;
 
             case 16:
-                if (waitTimer.getElapsedTimeSeconds() > WAIT_CYCLE3_SHOT) {
-                    startShoot();
+                if (driveDone() || waitTimer.getElapsedTimeSeconds() > WAIT_SHAKE) {
+                    waitTimer.resetTimer();
                     state = 17;
                 }
                 break;
 
             case 17:
-                if (!RobotConstants.actionBusy) {
-                    follower.setMaxPower(DRIVE_POWER_INTAKE);
-                    follower.followPath(paths.shootToIntakeHP3(), true);
-                    startIntake();
+                if (waitTimer.getElapsedTimeSeconds() > WAIT_INTAKE2_SETTLE) {
+                    stopIntake();
+                    robot.intakeFSM.startTransfer();
+                    follower.setMaxPower(DRIVE_POWER_SHOOT);
+                    follower.followPath(paths.intakeTHIRDHP2ToShoot(), true);
                     state = 18;
                 }
                 break;
 
             case 18:
                 if (driveDone()) {
-                    follower.followPath(paths.intakeWiggle(paths.intakeHP3), true);
                     waitTimer.resetTimer();
                     state = 19;
                 }
                 break;
 
             case 19:
-                if (driveDone() || waitTimer.getElapsedTimeSeconds() > WAIT_WIGGLE3) {
-                    waitTimer.resetTimer();
+                if (waitTimer.getElapsedTimeSeconds() > WAIT_CYCLE3_SHOT) {
+                    startShoot();
                     state = 20;
                 }
                 break;
 
+            // HP3
             case 20:
-                if (waitTimer.getElapsedTimeSeconds() > WAIT_INTAKE3_SETTLE) {
-                    stopIntake();
-                    robot.intakeFSM.startTransfer();
-
-                    follower.setMaxPower(DRIVE_POWER_SHOOT);
-                    follower.followPath(paths.intakeHP3ToShoot(), true);
-
+                if (!RobotConstants.actionBusy) {
+                    follower.setMaxPower(DRIVE_POWER_INTAKE);
+                    follower.followPath(paths.shootToIntakeHP3(), true);
+                    startIntake();
                     state = 21;
                 }
                 break;
 
             case 21:
                 if (driveDone()) {
+                    follower.followPath(paths.intakeWiggle(paths.intakeHP3), true);
                     waitTimer.resetTimer();
                     state = 22;
                 }
                 break;
 
             case 22:
-                if (waitTimer.getElapsedTimeSeconds() > WAIT_CYCLE4_SHOT) {
-                    startShoot();
+                if (driveDone() || waitTimer.getElapsedTimeSeconds() > WAIT_WIGGLE3) {
+                    follower.followPath(paths.intakeShake(paths.intakeHP3), true);
+                    waitTimer.resetTimer();
                     state = 23;
                 }
                 break;
+
             case 23:
+                if (driveDone() || waitTimer.getElapsedTimeSeconds() > WAIT_SHAKE) {
+                    waitTimer.resetTimer();
+                    state = 24;
+                }
+                break;
+
+            case 24:
+                if (waitTimer.getElapsedTimeSeconds() > WAIT_INTAKE3_SETTLE) {
+                    stopIntake();
+                    robot.intakeFSM.startTransfer();
+                    follower.setMaxPower(DRIVE_POWER_SHOOT);
+                    follower.followPath(paths.intakeHP3ToShoot(), true);
+                    state = 25;
+                }
+                break;
+
+            case 25:
+                if (driveDone()) {
+                    waitTimer.resetTimer();
+                    state = 26;
+                }
+                break;
+
+            case 26:
+                if (waitTimer.getElapsedTimeSeconds() > WAIT_CYCLE4_SHOT) {
+                    startShoot();
+                    state = 27;
+                }
+                break;
+
+            case 27:
                 if (!RobotConstants.actionBusy) {
                     follower.followPath(paths.parkFromShoot(), true);
                     state = 99;
                 }
                 break;
+
             case 99:
                 break;
         }
 
         telemetry.addData("state", state);
-        telemetry.addData("t", follower.getCurrentTValue());
-        telemetry.addData("busy", follower.isBusy());
-        telemetry.addData("actionBusy", RobotConstants.actionBusy);
         telemetry.update();
     }
 
@@ -312,4 +336,3 @@ public class FarCyclesx4ThirdAuto_BLUE extends OpMode {
         follower.setMaxPower(1);
     }
 }
-
