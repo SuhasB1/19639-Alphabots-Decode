@@ -135,7 +135,7 @@ public class Slow12 {
     public PathChain gateFromIntake1() {
         return f.pathBuilder()
                 .addPath(new BezierCurve(intake1, CONTROL_POSE_gateFromIntake1, gate))
-                .setBrakingStrength(1.5)
+                .setBrakingStrength(1)
                 .setLinearHeadingInterpolation(intake1.getHeading(), gate.getHeading())
                 .build();
     }

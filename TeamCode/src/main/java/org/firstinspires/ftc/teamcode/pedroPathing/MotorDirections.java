@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.hardware.configuration.typecontainers.MotorConfigu
 
 import java.util.Arrays;
 import java.util.List;
-
+@Disabled
 @Config
 @TeleOp
 public class MotorDirections extends OpMode {

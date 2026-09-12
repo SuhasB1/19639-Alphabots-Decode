@@ -8,8 +8,8 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 
-import org.firstinspires.ftc.teamcode.config.Robot;
 import org.firstinspires.ftc.teamcode.config.Alliance;
+import org.firstinspires.ftc.teamcode.config.Robot;
 import org.firstinspires.ftc.teamcode.config.RobotConstants;
 
 public class Fast15 {
@@ -18,7 +18,7 @@ public class Fast15 {
 
     public Pose start          = new Pose(24 + 6.1 - 1.25, 141.5 - 10.5, Math.toRadians(90));
     public Pose scorePControl  = new Pose(55.593-2.5, 94.779-2.5);
-    public Pose score          = new Pose(48-2.5, 96.0-2.5, Math.toRadians(132));
+    public Pose score          = new Pose(48-2.5, 96.0-2.5, Math.toRadians(133));
     public Pose intake1 = new Pose(21.25-2.5,85.5-2.5, Math.toRadians(180));
     public Pose intake1Control = new Pose(51.25-2.5, 81.5-2.5);
     public Pose intake2 = new Pose(14-2.5, 60.550-2.5, Math.toRadians(180));
@@ -29,7 +29,7 @@ public class Fast15 {
     public Pose intake3 = new Pose(14-2.5, 37.750-2.5, Math.toRadians(180));
     public Pose intake3Control = new Pose(68.5-2.5, 20-2.5);
     public Pose score3Control = new Pose(67.67-2.5,54-2.5);
-    public Pose score3          = new Pose(48-2.5, 96.0-2.5, Math.toRadians(131.67));
+    public Pose score3          = new Pose(48-2.5, 96.0-2.5, Math.toRadians(132.67));
     public Pose intakeCorner = new Pose(6.6,13-2.5, Math.toRadians(250));
     public Pose intakeCornerControl = new Pose(6.7,45-2.5);
     public Pose scoreCorner = new Pose(58-2.5,106-2.5, Math.toRadians(148.5));
