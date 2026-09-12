@@ -1,16 +1,17 @@
-package org.firstinspires.ftc.teamcode.opmode;
+package org.firstinspires.ftc.teamcode.opmode.oldRegionals;
 
 import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.follower;
 
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+import org.firstinspires.ftc.teamcode.config.paths.Fast15;
 import org.firstinspires.ftc.teamcode.config.Alliance;
 import org.firstinspires.ftc.teamcode.config.Robot;
 import org.firstinspires.ftc.teamcode.config.RobotConstants;
-import org.firstinspires.ftc.teamcode.config.paths.Fast15;
-
+@Disabled
 @Autonomous(name = "BLUE_Fast15 Auto", group = "Main")
 public class Fast15Auto_BLUE extends OpMode {
 

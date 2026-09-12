@@ -42,13 +42,13 @@ public class ShooterSubsystem {
 
     private final PIDFController velPID = new PIDFController(new PIDFCoefficients(kP, 0.0, kD, 0.0));
 
-    private static final double C_X1 = -13.0909, C_Y1 = 144.0;
-    private static final double C_X2 = 72.0,     C_Y2 = 60.0;
-    private static final double C_X3 = 157.0909, C_Y3 = 144.0;
+    private static final double C_X1 = -19.0909, C_Y1 = 130.0;
+    private static final double C_X2 = 72.0,     C_Y2 = 50.0;
+    private static final double C_X3 = 165.0909, C_Y3 = 130.0;
 
-    private static final double F_X1 = 10.0,  F_Y1 = -5.0;
-    private static final double F_X2 = 80.0,  F_Y2 = 45.0;
-    private static final double F_X3 = 130.0, F_Y3 = -5.0;
+    private static final double F_X1 = 7.0,  F_Y1 = -5.0;
+    private static final double F_X2 = 80.0,  F_Y2 = 55.0;
+    private static final double F_X3 = 140.0, F_Y3 = -5.0;
 
     private static class TriCheck {
         final boolean inside;
@@ -160,7 +160,7 @@ public class ShooterSubsystem {
     }
 
     public void updateVelocityControl(double robotX, double robotY) {
-        measuredVelocity = -left.getVelocity();
+        measuredVelocity = -right.getVelocity();
 
         if (robotY < 50) params = farLUT.getFromRobotPose(robotX, robotY);
         else params = closeLUT.getFromRobotPose(robotX, robotY);

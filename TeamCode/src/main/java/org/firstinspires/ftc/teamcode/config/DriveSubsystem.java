@@ -33,7 +33,7 @@ public class DriveSubsystem {
 
     private double power;
 
-    public static double headingDeadbandDeg = 0.8;
+    public static double headingDeadbandDeg = 2.5;
     private final ElapsedTime headingTimer = new ElapsedTime();
     PIDFController drivePID;
 
@@ -41,7 +41,7 @@ public class DriveSubsystem {
     private boolean holdEnabled = false;
 
     // If error <= this, we do NOT lock translation OR heading (your request)
-    public static double holdHeadingDeadbandDeg = 1.5;
+    public static double holdHeadingDeadbandDeg = 3;
 
     public DriveSubsystem(HardwareMap hw, Telemetry telemetry) {
         this.telemetry = telemetry;
@@ -113,7 +113,7 @@ public class DriveSubsystem {
                 )))
                 .setConstantHeadingInterpolation(desiredHeadingRad)
                 .build();
-        follower.setMaxPower(0.6);
+        follower.setMaxPower(0.8);
         follower.followPath(chain);
         follower.update();
     }
@@ -121,29 +121,33 @@ public class DriveSubsystem {
     public double convertHeading(double target) {
         if (getY() < 50) {
             if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 67) {
-                target = target + Math.toRadians(1.6);
+                target = target + Math.toRadians(1); //1.6
             } else if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 67) {
-                target = target - Math.toRadians(1);
+                target = target + Math.toRadians(1); //1
             } else if (RobotConstants.currentTeam.equals(Alliance.RED) && getX() > (141.5 - 67)) {
-                target = target - Math.toRadians(1.6);
+                target = target - Math.toRadians(1); // 1.6
             } else {
-                target = target + Math.toRadians(1);
+                target = target + Math.toRadians(1); // 1
             }
-        } else if (getY() > 125) {
-            if (RobotConstants.currentTeam.equals(Alliance.BLUE)) {
-                target = target + Math.toRadians(4);
-            } else if (RobotConstants.currentTeam.equals(Alliance.RED)) {
-                target = target - Math.toRadians(4);
+        } else if (getY() > 110) {
+            if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 72) {
+                target = target + Math.toRadians(1.67);
+            } else if(RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 72){
+                target = target + Math.toRadians(3.5);
+            } else if (RobotConstants.currentTeam.equals(Alliance.RED) && getX() > 72) {
+                target = target - Math.toRadians(1.67);
+            } else{
+                target = target - Math.toRadians(3.5);
             }
         } else {
-            if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 72) {
-                target = target - Math.toRadians(1);
-            } else if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 72) {
-                target = target + Math.toRadians(2);
-            } else if (RobotConstants.currentTeam.equals(Alliance.RED) && getX() > 72) {
-                target = target - Math.toRadians(1);
+            if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() < 80) {
+                target = target + Math.toRadians(1.67);
+            } else if (RobotConstants.currentTeam.equals(Alliance.BLUE) && getX() > 80) {
+                target = target + Math.toRadians(2.67);
+            } else if (RobotConstants.currentTeam.equals(Alliance.RED) && getX() > 60) {
+                target = target - Math.toRadians(1.67);
             } else {
-                target = target + Math.toRadians(2);
+                target = target - Math.toRadians(2.67);
             }
         }
         return target;
@@ -172,6 +176,7 @@ public class DriveSubsystem {
     public void headingLockPIDToHeading(Gamepad gp1, double targetHeading) {
         double vx = -gp1.left_stick_y * speed;
         double vy = -gp1.left_stick_x * speed;
+        targetHeading = convertHeading(targetHeading);
         headingLockPIDToHeadingInternal(vx, vy, targetHeading);
     }
 

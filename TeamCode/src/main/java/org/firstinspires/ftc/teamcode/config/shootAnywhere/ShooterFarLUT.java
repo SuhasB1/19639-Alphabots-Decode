@@ -6,7 +6,7 @@ import org.firstinspires.ftc.teamcode.config.RobotConstants;
 @Config
 public class ShooterFarLUT {
 
-    public static double val = 0;
+    public static double val = 11;
 
     private final InterpolatedLUT2D shooterLUT = new InterpolatedLUT2D();
     public ShooterFarLUT() {

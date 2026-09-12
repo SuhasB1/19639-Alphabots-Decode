@@ -1,36 +1,36 @@
-package org.firstinspires.ftc.teamcode.opmode;
+package org.firstinspires.ftc.teamcode.opmode.oldRegionals;
 
 import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.follower;
 
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+import org.firstinspires.ftc.teamcode.config.paths.Slow12;
 import org.firstinspires.ftc.teamcode.config.Alliance;
 import org.firstinspires.ftc.teamcode.config.Robot;
 import org.firstinspires.ftc.teamcode.config.RobotConstants;
-import org.firstinspires.ftc.teamcode.config.paths.Fast15;
-
-@Autonomous(name = "RED_Fast15 Auto", group = "Main")
-public class Fast15Auto_RED extends OpMode {
+@Disabled
+@Autonomous(name = "BLUE_Slow12 Consistent", group = "Main")
+public class Slow12Auto_BLUE extends OpMode {
 
     private Robot robot;
-    private Fast15 paths;
+    private Slow12 paths;
 
     private int pathState = 0;
 
-    private static final double T_DONE_SCORE  = 0.95;
-    private static final double T_DONE_INTAKE = 0.95;
+    private static final double T_DONE = 0.95;
 
-    Timer pathTimer = new Timer();
+    private static final double DRIVE_POWER_NORMAL = 0.75;
+    private static final double DRIVE_POWER_INTAKE = 0.65;
 
-    Timer autoTimer = new Timer();
-
+    private final Timer pathTimer = new Timer();
 
     @Override
     public void init() {
-        robot = new Robot(hardwareMap, telemetry, Alliance.RED);
-        paths = new Fast15(robot, Alliance.RED);
+        robot = new Robot(hardwareMap, telemetry, Alliance.BLUE);
+        paths = new Slow12(robot, Alliance.BLUE);
 
         RobotConstants.currentPose = paths.start;
 
@@ -39,7 +39,7 @@ public class Fast15Auto_RED extends OpMode {
         follower.setStartingPose(paths.start);
         follower.update();
 
-        follower.setMaxPower(0.95);
+        follower.setMaxPower(DRIVE_POWER_NORMAL);
 
         pathState = 0;
     }
@@ -48,19 +48,16 @@ public class Fast15Auto_RED extends OpMode {
     public void start() {
         pathState = 0;
         pathTimer.resetTimer();
-        autoTimer.resetTimer();
         robot.intakeFSM.startTransfer();
+        follower.setMaxPower(DRIVE_POWER_NORMAL);
         follower.followPath(paths.scoreP());
     }
 
     @Override
     public void loop() {
         follower.update();
-
         robot.update(gamepad1, gamepad2, follower.getPose().getX(), follower.getPose().getY());
-
         autonomousPathUpdate();
-
         telemetry.addData("pathState", pathState);
         telemetry.addData("t", follower.getCurrentTValue());
         telemetry.addData("actionBusy", RobotConstants.actionBusy);
@@ -73,12 +70,16 @@ public class Fast15Auto_RED extends OpMode {
         follower.setMaxPower(1);
     }
 
-    private boolean driveDone(double thresh) {
-        return follower.getCurrentTValue() > thresh && !follower.isBusy();
+    private boolean driveDone() {
+        return follower.getCurrentTValue() > T_DONE && !follower.isBusy();
     }
 
     private boolean actionDone() {
         return !RobotConstants.actionBusy;
+    }
+
+    private void setDrivePower(double p) {
+        follower.setMaxPower(p);
     }
 
     private void startShoot() {
@@ -90,15 +91,11 @@ public class Fast15Auto_RED extends OpMode {
         robot.intakeFSM.startIntake();
     }
 
-    private void stopIntake() {
-        robot.intakeFSM.stop();
-    }
-
     private void autonomousPathUpdate() {
         switch (pathState) {
 
             case 0:
-                if (driveDone(T_DONE_SCORE)) {
+                if (driveDone()) {
                     startShoot();
                     pathState = 1;
                 }
@@ -106,6 +103,7 @@ public class Fast15Auto_RED extends OpMode {
 
             case 1:
                 if (actionDone()) {
+                    setDrivePower(DRIVE_POWER_INTAKE);
                     follower.followPath(paths.intake1(), true);
                     startIntake();
                     pathState = 2;
@@ -113,13 +111,15 @@ public class Fast15Auto_RED extends OpMode {
                 break;
 
             case 2:
-                if (driveDone(T_DONE_INTAKE)) {
+                if (driveDone()) {
+                    setDrivePower(DRIVE_POWER_NORMAL);
                     follower.followPath(paths.score1(), true);
                     pathState = 3;
                 }
                 break;
+
             case 3:
-                if (driveDone(T_DONE_SCORE)) {
+                if (driveDone()) {
                     startShoot();
                     pathState = 4;
                 }
@@ -128,6 +128,7 @@ public class Fast15Auto_RED extends OpMode {
             case 4:
                 if (actionDone()) {
                     robot.intakeFSM.startTransfer();
+                    setDrivePower(DRIVE_POWER_INTAKE);
                     follower.followPath(paths.intake2(), true);
                     startIntake();
                     pathState = 5;
@@ -135,18 +136,22 @@ public class Fast15Auto_RED extends OpMode {
                 break;
 
             case 5:
-                if (driveDone(T_DONE_INTAKE)) {
+                if (driveDone()) {
                     robot.intakeFSM.startTransfer();
+                    setDrivePower(DRIVE_POWER_NORMAL);
                     follower.followPath(paths.gate(), true);
-                    pathState = 550;
+                    pathTimer.resetTimer();
+                    pathState = 55;
                 }
                 break;
-            case 550:
-                if (driveDone(T_DONE_SCORE)) {
+
+            case 55:
+                if (driveDone()) {
                     pathTimer.resetTimer();
                     pathState = 6;
                 }
                 break;
+
             case 6:
                 if (pathTimer.getElapsedTimeSeconds() > 0.9) {
                     follower.followPath(paths.score2(), true);
@@ -155,7 +160,7 @@ public class Fast15Auto_RED extends OpMode {
                 break;
 
             case 7:
-                if (driveDone(T_DONE_SCORE)) {
+                if (driveDone()) {
                     startShoot();
                     pathState = 8;
                 }
@@ -163,24 +168,24 @@ public class Fast15Auto_RED extends OpMode {
 
             case 8:
                 if (actionDone()) {
-                    stopIntake();
+                    setDrivePower(DRIVE_POWER_INTAKE);
                     follower.followPath(paths.intake3(), true);
                     startIntake();
-                    pathTimer.resetTimer();
                     pathState = 9;
                 }
                 break;
 
             case 9:
-                if (driveDone(T_DONE_INTAKE) && pathTimer.getElapsedTime() > 0.3) {
+                if (driveDone()) {
                     robot.intakeFSM.startTransfer();
+                    setDrivePower(0.75);
                     follower.followPath(paths.score3(), true);
                     pathState = 10;
                 }
                 break;
 
             case 10:
-                if (driveDone(T_DONE_SCORE)) {
+                if (driveDone()) {
                     startShoot();
                     pathState = 11;
                 }
@@ -188,47 +193,13 @@ public class Fast15Auto_RED extends OpMode {
 
             case 11:
                 if (actionDone()) {
-                    stopIntake();
-                    follower.followPath(paths.intakeCorner(), true);
-                    startIntake();
-                    pathState = 1150;
-                }
-                break;
-            case 1150:
-                if(driveDone(T_DONE_SCORE)){
-                    pathTimer.resetTimer();
                     pathState = 12;
                 }
+                break;
+
             case 12:
-                if(driveDone(T_DONE_SCORE)){
-                    follower.setMaxPower(0.75);
-                    follower.followPath(paths.scoreCorner(), true);
-                    pathState = 1250;
-                }
-                break;
-            case 1250:
-                if (driveDone(0.4)) {
-                    stopIntake();
-                    pathState = 13;
-                }
-                break;
-            case 13:
-                if (driveDone(T_DONE_SCORE)) {
-                    startShoot();
-                    pathState = 14;
-                }
-                break;
-            case 14:
-                if (actionDone()) {
-                    stopIntake();
-                    pathState = 15;
-                }
-                break;
-            case 15:
-                if (driveDone(T_DONE_SCORE)) {
-                    //done
-                }
                 break;
         }
     }
 }
+

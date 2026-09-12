@@ -11,6 +11,7 @@ import com.pedropathing.control.PIDFController;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -24,7 +25,7 @@ import org.firstinspires.ftc.teamcode.config.shootAnywhere.ShooterCloseLUT;
 import org.firstinspires.ftc.teamcode.config.shootAnywhere.ShooterParams;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
-
+@Disabled
 @Config
 @TeleOp
 public class FlywheelTuning extends OpMode {
@@ -115,7 +116,7 @@ public class FlywheelTuning extends OpMode {
     @Override
     public void loop() {
         boolean rtHeld = gamepad1.right_trigger > 0.1;
-        velocity = -motor.getVelocity();
+        velocity = -motor2.getVelocity();
 
         if (rtHeld && !prevRT) {
             drive.resetHeadingPID();

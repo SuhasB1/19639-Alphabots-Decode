@@ -79,13 +79,11 @@ public class MainTeleOp extends OpMode {
         prevLB = gamepad1.left_bumper;
         prevRT = (gamepad1.right_trigger > 0.1);
 
-        prevDpadLeft = gamepad2.dpad_left;
-        prevDpadRight = gamepad2.dpad_right;
-        prevDpadUp = gamepad2.dpad_up;
-        prevDpadDown = gamepad2.dpad_down;
+        prevDpadLeft = gamepad1.dpad_left;
+        prevDpadRight = gamepad1.dpad_right;
+        prevDpadUp = gamepad1.dpad_up;
+        prevDpadDown = gamepad1.dpad_down;
         prevOptions = gamepad2.options;
-        prevLB2 = gamepad2.left_bumper;
-        prevRB2 = gamepad2.right_bumper;
 
 
         prevShare = gamepad1.share;
@@ -119,66 +117,34 @@ public class MainTeleOp extends OpMode {
     public void loop() {
         loopTime.reset();
 
-        boolean wiggleHeld = gamepad2.dpad_down;
+        boolean wiggleHeld = gamepad1.dpad_up;
         robot.intake.updateWiggle(wiggleHeld);
 
-        boolean dpadDown = gamepad2.cross;
+        boolean dpadDown = gamepad1.dpad_down;
         if (dpadDown && !prevDpadDown) {
             if (RobotConstants.currentTeam == Alliance.RED) {
-                robot.drive.resetPose(5, 6.5, Math.toRadians(0));
+                robot.drive.resetPose(8.4, 7.1, Math.toRadians(0));
             }else{
-                robot.drive.resetPose(141.5 - 5, 6.5, Math.toRadians(180));
+                robot.drive.resetPose(141.5 - 8.4, 7.1, Math.toRadians(180));
 
             }
         }
         prevDpadDown = dpadDown;
 
-        boolean dpadLeft = gamepad2.square;
+
+        boolean dpadLeft = gamepad1.dpad_left;
         if (dpadLeft && !prevDpadLeft) {
-            if (RobotConstants.currentTeam == Alliance.RED) {
-                robot.drive.resetPose(141.5 - 51.67, 6.67, Math.toRadians(90));
-            }else{
-                robot.drive.resetPose(51.67, 6.67, Math.toRadians(90));
-
-            }
-        }
-        prevDpadLeft = dpadLeft;
-
-        boolean dpadRight = gamepad2.circle;
-        if (dpadRight && !prevDpadRight) {
-            if (RobotConstants.currentTeam == Alliance.RED) {
-                robot.drive.resetPose(141.5-28.5, 131, Math.toRadians(90));
-            }else{
-                robot.drive.resetPose(28.5, 131, Math.toRadians(90));
-
-            }
-        }
-        prevDpadRight = dpadRight;
-
-        boolean dpadUp = gamepad2.triangle;
-        if (dpadUp && !prevDpadUp) {
-            if (RobotConstants.currentTeam == Alliance.RED) {
-                robot.drive.resetPose(141.5-8, 62, Math.toRadians(0));
-            }else{
-                robot.drive.resetPose(8, 62, Math.toRadians(180));
-
-            }
-        }
-        prevDpadUp = dpadUp;
-
-        boolean lb2 = gamepad2.left_bumper;
-        if (lb2 && !prevLB2) {
             if (RobotConstants.currentTeam.equals(Alliance.BLUE)) headingOffsetDeg += 1.0;
             else headingOffsetDeg += 1.0;
         }
-        prevLB2 = lb2;
+        prevDpadLeft = dpadLeft;
 
-        boolean rb2 = gamepad2.right_bumper;
-        if (rb2 && !prevRB2) {
+        boolean dpadRight = gamepad1.dpad_right;
+        if (dpadRight && !prevDpadRight) {
             if (RobotConstants.currentTeam.equals(Alliance.BLUE)) headingOffsetDeg -= 1.0;
             else headingOffsetDeg -= 1.0;
         }
-        prevRB2 = rb2;
+        prevDpadRight = dpadRight;
 
         boolean ltHeld = gamepad1.left_trigger > 0.1;
         if (!wiggleHeld) {

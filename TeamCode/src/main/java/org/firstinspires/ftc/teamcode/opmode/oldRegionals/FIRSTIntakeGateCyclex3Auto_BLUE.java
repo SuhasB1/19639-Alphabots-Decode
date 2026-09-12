@@ -1,37 +1,38 @@
-package org.firstinspires.ftc.teamcode.opmode;
+package org.firstinspires.ftc.teamcode.opmode.oldRegionals;
 
 import static org.firstinspires.ftc.teamcode.pedroPathing.Tuning.follower;
 
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.teamcode.config.Alliance;
 import org.firstinspires.ftc.teamcode.config.Robot;
 import org.firstinspires.ftc.teamcode.config.RobotConstants;
-import org.firstinspires.ftc.teamcode.config.paths.GateCycle;
-
-@Autonomous(name = "!RED_GateCyclex3", group = "Main")
-public class GateCyclex3Auto_RED extends OpMode {
+import org.firstinspires.ftc.teamcode.config.paths.GateCycle1st;
+@Disabled
+@Autonomous(name = "FIRST INTAKE BLUE_GateCyclex3", group = "Main")
+public class FIRSTIntakeGateCyclex3Auto_BLUE extends OpMode {
 
     private Robot robot;
-    private GateCycle paths;
+    private GateCycle1st paths;
 
     private int pathState = 0;
     private int gateRepeatsDone = 0;
 
     private static final double T_DONE_SCORE = 0.95;
-    private static final double T_DONE_INTAKE = 0.9;
-
+    private static final double T_DONE_INTAKE = 0.95;
     private static final double GATE_WAIT_SECONDS = 1.35;
+    private static final double SHOOT_SETTLE = 0.05;
 
-    private final Timer pathTimer = new Timer();
     private final Timer gateWaitTimer = new Timer();
+    private final Timer shootWaitTimer = new Timer();
 
     @Override
     public void init() {
-        robot = new Robot(hardwareMap, telemetry, Alliance.RED);
-        paths = new GateCycle(robot, Alliance.RED);
+        robot = new Robot(hardwareMap, telemetry, Alliance.BLUE);
+        paths = new GateCycle1st(robot, Alliance.BLUE);
 
         RobotConstants.currentPose = paths.start;
 
@@ -49,8 +50,9 @@ public class GateCyclex3Auto_RED extends OpMode {
     public void start() {
         pathState = 0;
         gateRepeatsDone = 0;
-        pathTimer.resetTimer();
         gateWaitTimer.resetTimer();
+        shootWaitTimer.resetTimer();
+
         robot.intakeFSM.startTransfer();
         follower.followPath(paths.scorePreload());
     }
@@ -64,8 +66,6 @@ public class GateCyclex3Auto_RED extends OpMode {
 
         telemetry.addData("pathState", pathState);
         telemetry.addData("gateRepeatsDone", gateRepeatsDone);
-        telemetry.addData("t", follower.getCurrentTValue());
-        telemetry.addData("actionBusy", RobotConstants.actionBusy);
         telemetry.update();
     }
 
@@ -92,11 +92,11 @@ public class GateCyclex3Auto_RED extends OpMode {
         robot.intakeFSM.startIntake();
     }
 
-    private void leverDown(){
+    private void leverDown() {
         robot.intake.leverDown();
     }
 
-    private void leverUp(){
+    private void leverUp() {
         robot.intake.leverUp();
     }
 
@@ -107,128 +107,140 @@ public class GateCyclex3Auto_RED extends OpMode {
     private void autonomousPathUpdate() {
         switch (pathState) {
 
+            // PRELOAD
             case 0:
                 if (driveDone(T_DONE_SCORE)) {
                     leverUp();
-                    startShoot();
+                    shootWaitTimer.resetTimer();
                     pathState = 1;
                 }
                 break;
 
             case 1:
-                if (actionDone()) {
-                    follower.followPath(paths.toIntake1(), true);
-                    startIntake();
+                if (shootWaitTimer.getElapsedTimeSeconds() > 0.05) {
+                    startShoot();
                     pathState = 2;
                 }
                 break;
 
+            // INTAKE 2
             case 2:
-                if (driveDone(T_DONE_INTAKE)) {
-                    follower.followPath(paths.intake1ToScore(), true);
+                if (actionDone()) {
+                    follower.followPath(paths.toIntake2(), true);
+                    startIntake();
                     pathState = 3;
                 }
                 break;
 
             case 3:
-                if (driveDone(T_DONE_SCORE)) {
-                    startShoot();
+                if (driveDone(T_DONE_INTAKE)) {
+                    robot.intakeFSM.startTransfer();
+                    follower.followPath(paths.intake2ToScore(), true);
                     pathState = 4;
                 }
                 break;
 
             case 4:
-                if (actionDone()) {
-                    robot.intakeFSM.startTransfer();
-                    follower.followPath(paths.toIntake2(), true);
-                    startIntake();
+                if (driveDone(T_DONE_SCORE)) {
+                    shootWaitTimer.resetTimer();
                     pathState = 5;
                 }
                 break;
 
             case 5:
-                if (driveDone(T_DONE_INTAKE)) {
-                    robot.intakeFSM.startTransfer();
-                    follower.followPath(paths.intake2ToGate(), true);
+                if (shootWaitTimer.getElapsedTimeSeconds() > SHOOT_SETTLE) {
+                    leverUp();
+                    startShoot();
                     pathState = 6;
                 }
                 break;
 
+            // GATE CYCLES
             case 6:
-                if (driveDone(T_DONE_SCORE)) {
-                    pathTimer.resetTimer();
+                if (actionDone()) {
+                    stopIntake();
+                    leverDown();
+                    startIntake();
+                    follower.followPath(paths.scoreToGateIntake(), true);
                     pathState = 7;
                 }
                 break;
 
             case 7:
-                if (pathTimer.getElapsedTimeSeconds() > 0.5) {
-                    follower.followPath(paths.gateToScore(), true);
+                if (driveDone(T_DONE_INTAKE)) {
+                    gateWaitTimer.resetTimer();
                     pathState = 8;
                 }
                 break;
 
             case 8:
-                if (driveDone(T_DONE_SCORE)) {
-                    startShoot();
+                if (gateWaitTimer.getElapsedTimeSeconds() >= GATE_WAIT_SECONDS) {
+                    follower.followPath(paths.gateIntakeToScore(), true);
                     pathState = 9;
                 }
                 break;
 
             case 9:
-                if (actionDone()) {
-                    stopIntake();
-                    if(gateRepeatsDone == 2) {
-                        follower.followPath(paths.scoreToGateIntakeThird(), true);
-                    }else{
-                        follower.followPath(paths.scoreToGateIntake(), true);
-                    }
-                    leverDown();
-                    startIntake();
+                if (driveDone(T_DONE_SCORE)) {
+                    shootWaitTimer.resetTimer();
                     pathState = 10;
                 }
                 break;
 
             case 10:
-                if (driveDone(T_DONE_INTAKE)) {
-                    gateWaitTimer.resetTimer();
+                if (shootWaitTimer.getElapsedTimeSeconds() > SHOOT_SETTLE) {
+                    leverUp();
+                    startShoot();
                     pathState = 11;
                 }
                 break;
 
             case 11:
-                if (gateWaitTimer.getElapsedTimeSeconds() >= GATE_WAIT_SECONDS) {
-                    if(gateRepeatsDone == 2){
-                        follower.followPath(paths.gateIntakeThirdToScorePark());
-                        pathState = 12;
-                    }else {
-                        follower.followPath(paths.gateIntakeToScore(), true);
+                if (actionDone()) {
+                    gateRepeatsDone++;
+                    if (gateRepeatsDone < 3) {
+                        leverDown();
+                        startIntake();
+                        follower.followPath(paths.scoreToGateIntake(), true);
+                        pathState = 7;
+                    } else {
                         pathState = 12;
                     }
                 }
                 break;
+
+            // INTAKE 1
             case 12:
-                if (driveDone(T_DONE_SCORE)) {
-                    leverUp();
-                    startShoot();
+                if (actionDone()) {
+                    follower.followPath(paths.toIntake1(), true);
+                    startIntake();
                     pathState = 13;
                 }
                 break;
 
             case 13:
-                if (actionDone()) {
-                    gateRepeatsDone++;
-                    if (gateRepeatsDone < 3) {
-                        leverDown();
-                        follower.followPath(paths.scoreToGateIntake(), true);
-                        startIntake();
-                        pathState = 10;
-                    } else {
-                        pathState = 14;
-                    }
+                if (driveDone(T_DONE_INTAKE)) {
+                    follower.followPath(paths.intake1ToScore(), true);
+                    pathState = 14;
                 }
                 break;
+
             case 14:
+                if (driveDone(T_DONE_SCORE)) {
+                    shootWaitTimer.resetTimer();
+                    pathState = 15;
+                }
+                break;
+
+            case 15:
+                if (shootWaitTimer.getElapsedTimeSeconds() > SHOOT_SETTLE) {
+                    leverUp();
+                    startShoot();
+                    pathState = 16;
+                }
+                break;
+
+            case 16:
                 break;
         }
     }
